@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import aldiaMark from "../assets/aldia-mark.png";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -56,7 +57,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Blinka Agent — Agentes que pagan por la empresa" },
+      { title: "Blinka Agent by AL DIA" },
       { name: "description", content: "Agente de IA que paga cuentas dentro de las reglas de la empresa y pide permiso cuando algo se sale de ellas." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -66,7 +67,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" },
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
@@ -104,8 +105,8 @@ function RootComponent() {
         <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-6 py-3">
             <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-              <span className="grid h-7 w-7 place-items-center rounded bg-primary font-mono text-sm text-primary-foreground">B</span>
-              Blinka<span className="text-primary">Agent</span>
+              <img src={aldiaMark} alt="AL DIA" width={28} height={28} className="h-7 w-7 rounded" />
+              <span>Blinka<span className="text-primary">Agent</span> <span className="font-mono text-xs font-normal text-muted-foreground">by AL DIA</span></span>
             </Link>
             <nav className="flex flex-wrap gap-1 text-sm">
               {NAV.map((n) => (
@@ -126,6 +127,9 @@ function RootComponent() {
         <main className="mx-auto max-w-7xl px-6 py-8">
           <Outlet />
         </main>
+        <footer className="border-t border-border py-6 text-center font-mono text-xs text-muted-foreground">
+          Producto de AL DIA · Powered by ALJ · Datos ficticios, ningún pago real
+        </footer>
       </div>
     </QueryClientProvider>
   );

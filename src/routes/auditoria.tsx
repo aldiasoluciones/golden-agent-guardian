@@ -8,17 +8,19 @@ import { useAppState } from "@/lib/store";
 export const Route = createFileRoute("/auditoria")({
   head: () => ({
     meta: [
-      { title: "Registro de auditoría — Blinka Agent" },
+      { title: "Registro de auditoría — Blinka Agent by AL DIA" },
       { name: "description", content: "Bitácora inmutable de cada decisión del agente y de cada aprobación humana." },
-      { property: "og:title", content: "Registro de auditoría — Blinka Agent" },
-      { property: "og:description", content: "Cada pago, retención y aprobación queda registrada con su comprobante." },
+      { property: "og:title", content: "Registro de auditoría — Blinka Agent by AL DIA" },
+      { property: "og:description", content: "Cada pago, freno y escalamiento queda registrado con su porqué." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuditPage,
 });
 
 const COLORS: Record<string, string> = {
-  pago_auto: "border-primary", aprobada: "border-primary", retenida: "border-warning", rechazada: "border-destructive",
+  pago_auto: "border-primary", aprobada: "border-primary", retenida: "border-warning", frenada: "border-destructive", rechazada: "border-destructive",
 };
 
 function AuditPage() {
@@ -26,11 +28,11 @@ function AuditPage() {
   const [open, setOpen] = useState<string | null>(null);
   const inv = invoices.find((i) => i.id === open);
   const exportCsv = () => {
-    const rows = [["fecha", "tipo", "monto", "mensaje"], ...audit.map((e) => [e.at, e.type, String(e.amount ?? ""), e.message.replace(/"/g, "'")])];
+    const rows = [["AL DIA · Blinka Agent — registro de decisiones"], ["fecha", "tipo", "monto", "mensaje"], ...audit.map((e) => [e.at, e.type, String(e.amount ?? ""), e.message.replace(/"/g, "'")])];
     const blob = new Blob([rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "auditoria-blinka.csv";
+    a.download = "aldia-blinka-auditoria.csv";
     a.click();
   };
   return (

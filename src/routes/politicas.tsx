@@ -1,17 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Panel, inputCls } from "@/components/ui-bits";
-import { fmt } from "@/lib/rules";
+import { fmt, money } from "@/lib/rules";
 import { log, store, uid, useAppState } from "@/lib/store";
 import type { Policies, Vendor } from "@/lib/types";
 
 export const Route = createFileRoute("/politicas")({
   head: () => ({
     meta: [
-      { title: "Políticas financieras — Blinka Agent" },
+      { title: "Políticas financieras — Blinka Agent by AL DIA" },
       { name: "description", content: "Límites de auto-pago, lista blanca de proveedores, presupuestos y reglas de anomalías." },
-      { property: "og:title", content: "Políticas financieras — Blinka Agent" },
-      { property: "og:description", content: "Define las reglas dentro de las que el agente puede pagar solo." },
+      { property: "og:title", content: "Políticas financieras — Blinka Agent by AL DIA" },
+      { property: "og:description", content: "Define las reglas dentro de las que el agente de AL DIA puede pagar solo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PoliciesPage,
@@ -24,7 +26,7 @@ function setP(patch: Partial<Policies>, msg: string) {
 
 function PoliciesPage() {
   const { policies: p } = useAppState();
-  const [v, setV] = useState<Omit<Vendor, "id">>({ name: "", nit: "", bankAccount: "", category: "Suministros", avgAmount: 1_000_000 });
+  const [v, setV] = useState<Omit<Vendor, "id">>({ name: "", nit: "", bankAccount: "", category: "Suministros", currency: "COP", avgAmount: 1_000_000 });
 
   return (
     <div className="space-y-6">
@@ -38,6 +40,19 @@ function PoliciesPage() {
           <input type="number" className={inputCls} value={p.autoPayLimit}
             onChange={(e) => setP({ autoPayLimit: Number(e.target.value) }, `Límite de auto-pago cambiado a ${fmt(Number(e.target.value))}.`)} />
           <p className="mt-2 font-mono text-xs text-muted-foreground">Por encima de {fmt(p.autoPayLimit)} se pide aprobación.</p>
+        </Panel>
+        <Panel title="Límite por período (mes)">
+          <input type="number" className={inputCls} value={p.periodLimit}
+            onChange={(e) => setP({ periodLimit: Number(e.target.value) }, `Límite mensual cambiado a ${fmt(Number(e.target.value))}.`)} />
+          <p className="mt-2 font-mono text-xs text-muted-foreground">Total máximo pagado en el mes.</p>
+        </Panel>
+        <Panel title="Moneda y montos acordados">
+          <label className="text-sm">Tasa USD → COP</label>
+          <input type="number" className={`${inputCls} mt-1`} value={p.usdRate}
+            onChange={(e) => setP({ usdRate: Number(e.target.value) }, `Tasa USD→COP cambiada a ${e.target.value}.`)} />
+          <label className="mt-3 block text-sm">Tolerancia sobre lo acordado (%)</label>
+          <input type="number" className={`${inputCls} mt-1`} value={p.agreedTolerance}
+            onChange={(e) => setP({ agreedTolerance: Number(e.target.value) }, `Tolerancia sobre monto acordado = ${e.target.value}%.`)} />
         </Panel>
         <Panel title="Detección de anomalías">
           <label className="text-sm">Multiplicador sobre el promedio histórico</label>
@@ -67,11 +82,11 @@ function PoliciesPage() {
         </div>
       </Panel>
 
-      <Panel title="Lista blanca de proveedores">
+      <Panel title="Beneficiarios permitidos (lista blanca)">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left font-mono text-xs text-muted-foreground">
-              <tr><th className="py-2">Proveedor</th><th>NIT</th><th>Cuenta registrada</th><th>Categoría</th><th>Promedio</th><th /></tr>
+              <tr><th className="py-2">Proveedor</th><th>NIT</th><th>Cuenta registrada</th><th>Categoría</th><th>Moneda</th><th>Promedio</th><th>Acordado</th><th /></tr>
             </thead>
             <tbody className="divide-y divide-border">
               {p.vendors.map((x) => (
@@ -80,7 +95,9 @@ function PoliciesPage() {
                   <td className="font-mono">{x.nit}</td>
                   <td className="font-mono">{x.bankAccount}</td>
                   <td>{x.category}</td>
-                  <td className="font-mono">{fmt(x.avgAmount)}</td>
+                  <td className="font-mono">{x.currency}</td>
+                  <td className="font-mono">{money(x.avgAmount, x.currency)}</td>
+                  <td className="font-mono">{x.agreedAmount ? money(x.agreedAmount, x.currency) : "—"}</td>
                   <td className="text-right">
                     <button className="text-xs text-destructive" onClick={() => setP({ vendors: p.vendors.filter((y) => y.id !== x.id) }, `Proveedor ${x.name} retirado de la lista blanca.`)}>Quitar</button>
                   </td>
@@ -89,7 +106,7 @@ function PoliciesPage() {
             </tbody>
           </table>
         </div>
-        <form className="mt-4 grid gap-2 sm:grid-cols-6"
+        <form className="mt-4 grid gap-2 sm:grid-cols-7"
           onSubmit={(e) => {
             e.preventDefault();
             if (!v.name || !v.nit) return;
@@ -97,11 +114,12 @@ function PoliciesPage() {
             setV({ ...v, name: "", nit: "", bankAccount: "" });
           }}>
           <input className={inputCls} placeholder="Nombre" value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
-          <input className={inputCls} placeholder="NIT" value={v.nit} onChange={(e) => setV({ ...v, nit: e.target.value })} />
+          <input className={inputCls} placeholder="NIT / EIN" value={v.nit} onChange={(e) => setV({ ...v, nit: e.target.value })} />
           <input className={inputCls} placeholder="Banco y cuenta" value={v.bankAccount} onChange={(e) => setV({ ...v, bankAccount: e.target.value })} />
           <select className={inputCls} value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })}>
             {Object.keys(p.budgets).map((c) => <option key={c}>{c}</option>)}
           </select>
+          <select className={inputCls} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "COP" | "USD" })}><option>COP</option><option>USD</option></select>
           <input type="number" className={inputCls} placeholder="Promedio" value={v.avgAmount} onChange={(e) => setV({ ...v, avgAmount: Number(e.target.value) })} />
           <button className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Agregar</button>
         </form>

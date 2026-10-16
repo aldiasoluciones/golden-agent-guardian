@@ -3,19 +3,23 @@ import type { AppState, AuditEvent, Invoice, Policies } from "./types";
 
 export const DEFAULT_POLICIES: Policies = {
   autoPayLimit: 5_000_000,
+  periodLimit: 40_000_000,
+  usdRate: 4_000,
+  agreedTolerance: 5,
   anomalyMultiplier: 2,
   requireBankMatch: true,
   blockDuplicates: true,
-  budgets: { Suministros: 10_000_000, Tecnología: 30_000_000, Logística: 15_000_000, Servicios: 8_000_000 },
+  budgets: { Suministros: 10_000_000, Tecnología: 30_000_000, Logística: 15_000_000, Servicios: 3_000_000 },
   vendors: [
-    { id: "v1", name: "Papelería Andina S.A.S", nit: "900123456-1", bankAccount: "Bancolombia 123-456789-01", category: "Suministros", avgAmount: 1_700_000 },
-    { id: "v2", name: "Servicios Cloud Nova", nit: "901555222-3", bankAccount: "Davivienda 0045-778812", category: "Tecnología", avgAmount: 4_200_000 },
-    { id: "v3", name: "TransLogix Colombia", nit: "830777111-9", bankAccount: "BBVA 0013-554433", category: "Logística", avgAmount: 2_900_000 },
-    { id: "v4", name: "Aseo Integral Bogotá", nit: "900888999-0", bankAccount: "Banco de Bogotá 221-99881", category: "Servicios", avgAmount: 1_200_000 },
+    { id: "v1", name: "Papelería Andina S.A.S", nit: "900123456-1", bankAccount: "Bancolombia 123-456789-01", category: "Suministros", currency: "COP", avgAmount: 1_700_000 },
+    { id: "v2", name: "Servicios Cloud Nova", nit: "901555222-3", bankAccount: "Davivienda 0045-778812", category: "Tecnología", currency: "COP", avgAmount: 4_200_000 },
+    { id: "v3", name: "TransLogix Colombia", nit: "830777111-9", bankAccount: "BBVA 0013-554433", category: "Logística", currency: "COP", avgAmount: 3_500_000 },
+    { id: "v4", name: "Aseo Integral Bogotá", nit: "900888999-0", bankAccount: "Banco de Bogotá 221-99881", category: "Servicios", currency: "COP", avgAmount: 2_600_000 },
+    { id: "v5", name: "DevStudio Remote LLC", nit: "EIN 88-1234567", bankAccount: "Chase 021000021-77441", category: "Tecnología", currency: "USD", avgAmount: 800, agreedAmount: 800 },
   ],
 };
 
-const KEY = "blinka-agent-v1";
+const KEY = "aldia-blinka-agent-v2";
 const initial = (): AppState => ({ policies: DEFAULT_POLICIES, invoices: [], audit: [] });
 let state: AppState = initial();
 let loaded = false;

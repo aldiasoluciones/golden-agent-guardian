@@ -3,23 +3,28 @@ import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
 import { Panel, StatusBadge, inputCls } from "@/components/ui-bits";
 import { Receipt } from "@/components/receipt";
-import { SAMPLES, addInvoice, humanDecision, runAgent } from "@/lib/agent";
+import { SAMPLES, SAMPLE_META, addInvoice, humanDecision, runAgent, type SampleKey } from "@/lib/agent";
 import { extractInvoice } from "@/lib/extract.functions";
-import { fmt } from "@/lib/rules";
+import { money } from "@/lib/rules";
 import { useAppState } from "@/lib/store";
 import type { Check } from "@/lib/types";
 
 export const Route = createFileRoute("/bandeja")({
   head: () => ({
     meta: [
-      { title: "Bandeja de facturas — Blinka Agent" },
-      { name: "description", content: "Sube facturas y mira al agente auditarlas, pagarlas o pedir aprobación en tiempo real." },
-      { property: "og:title", content: "Bandeja de facturas — Blinka Agent" },
+      { title: "Bandeja de facturas — Blinka Agent by AL DIA" },
+      { name: "description", content: "Sube facturas o corre los casos trampa del reto y mira al agente de AL DIA pagar, frenar o escalar." },
+      { property: "og:title", content: "Bandeja de facturas — Blinka Agent by AL DIA" },
       { property: "og:description", content: "Auditoría en vivo con razonamiento, verificación de reglas y aprobación humana." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Inbox,
 });
+
+const EXPECT_CLS = { pagar: "border-primary/50", frenar: "border-destructive/50", escalar: "border-warning/60" } as const;
+const EXPECT_TXT = { pagar: "→ paga", frenar: "→ frena", escalar: "→ escala" } as const;
 
 function Inbox() {
   const { invoices } = useAppState();
@@ -43,24 +48,24 @@ function Inbox() {
     setBusy(false);
   };
 
-  const quick = (k: keyof typeof SAMPLES) => start(addInvoice(SAMPLES[k]()).id);
+  const quick = (k: SampleKey) => start(addInvoice(SAMPLES[k]()).id);
 
   const onFile = async (f: File) => {
     setUpErr("");
     if (f.size > 4_500_000) return setUpErr("El archivo supera 4.5 MB.");
     setUploading(true);
     try {
-      const isText = /\.(txt|csv|json|xml|md)$/i.test(f.name) || f.type.startsWith("text/");
+      const isText = /\.(txt|csv|json|xml|md|eml)$/i.test(f.name) || f.type.startsWith("text/");
       const payload = isText
         ? { fileName: f.name, mime: f.type, text: await f.text() }
         : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
       const res = await extract({ data: payload });
       if (!res.ok) return setUpErr(`No se pudo leer la factura: ${res.error}`);
-      const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; category?: string; dueDate?: string; description?: string };
+      const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string };
       const inv = addInvoice({
         number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
-        bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, category: String(x.category || "Otro"),
-        dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`,
+        bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
+        category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`,
       });
       await start(inv.id);
     } catch (e) {
@@ -78,17 +83,15 @@ function Inbox() {
   return (
     <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       <div className="space-y-4">
-        <Panel title="Pruebas rápidas">
+        <Panel title="Set del reto · un clic por caso">
           <div className="grid gap-2">
-            <button disabled={busy} onClick={() => quick("valida")} className="rounded-md bg-primary px-3 py-2.5 text-left text-sm font-semibold text-primary-foreground disabled:opacity-50">
-              ✓ Factura aprobable <span className="block text-xs font-normal opacity-80">Papelería · $1.850.000 · dentro de reglas</span>
-            </button>
-            <button disabled={busy} onClick={() => quick("anomala")} className="rounded-md bg-warning px-3 py-2.5 text-left text-sm font-semibold text-warning-foreground disabled:opacity-50">
-              ⚠ Factura anómala <span className="block text-xs font-normal opacity-80">$18.500.000 · cambio de cuenta bancaria</span>
-            </button>
-            <button disabled={busy} onClick={() => quick("desconocido")} className="rounded-md border border-border px-3 py-2.5 text-left text-sm disabled:opacity-50">
-              ? Proveedor fuera de lista blanca
-            </button>
+            {SAMPLE_META.map((m) => (
+              <button key={m.key} disabled={busy} onClick={() => quick(m.key)}
+                className={`rounded-md border-l-4 border border-border px-3 py-2 text-left text-sm hover:bg-secondary disabled:opacity-50 ${EXPECT_CLS[m.expect]}`}>
+                <span className="flex justify-between gap-2 font-semibold">{m.label}<span className="font-mono text-[11px] font-normal text-muted-foreground">{EXPECT_TXT[m.expect]}</span></span>
+                <span className="block text-xs text-muted-foreground">{m.hint}</span>
+              </button>
+            ))}
           </div>
         </Panel>
         <Panel title="Subir factura">
@@ -98,9 +101,9 @@ function Inbox() {
             onClick={() => fileRef.current?.click()}
             className="cursor-pointer rounded-md border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary"
           >
-            {uploading ? "La IA está leyendo la factura…" : "Arrastra o haz clic · PDF, imagen o texto"}
+            {uploading ? "La IA está leyendo la factura…" : "Arrastra o haz clic · PDF, imagen, correo o chat (texto)"}
           </div>
-          <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
+          <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
           {upErr && <p className="mt-2 text-sm text-destructive">{upErr}</p>}
         </Panel>
         <Panel title={`Cuentas por pagar (${invoices.length})`}>
@@ -109,7 +112,7 @@ function Inbox() {
             {invoices.map((i) => (
               <li key={i.id}>
                 <button onClick={() => setSel(i.id)} className={`w-full rounded-md border p-3 text-left text-sm ${sel === i.id ? "border-primary bg-secondary" : "border-border hover:bg-secondary"}`}>
-                  <div className="flex justify-between gap-2"><span className="truncate">{i.vendorName}</span><span className="font-mono">{fmt(i.amount)}</span></div>
+                  <div className="flex justify-between gap-2"><span className="truncate">{i.vendorName}</span><span className="font-mono">{money(i.amount, i.currency)}</span></div>
                   <div className="mt-1 flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{i.number}</span><StatusBadge s={i.status} /></div>
                 </button>
               </li>
@@ -127,16 +130,19 @@ function Inbox() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xl font-semibold">{cur.vendorName}</p>
-                  <p className="font-mono text-xs text-muted-foreground">NIT {cur.nit} · {cur.number} · vence {cur.dueDate} · {cur.category}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{cur.nit} · {cur.number} · vence {cur.dueDate} · {cur.category}</p>
                   <p className="mt-2 text-sm">{cur.description}</p>
                   <p className="mt-1 font-mono text-xs text-muted-foreground">Pagar a: {cur.bankAccount}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-2xl font-semibold">{fmt(cur.amount)}</p>
+                  <p className="font-mono text-2xl font-semibold">{money(cur.amount, cur.currency)}</p>
                   <StatusBadge s={cur.status} />
                 </div>
               </div>
-              {(cur.status === "pendiente") && (
+              {cur.decisionReason && cur.status !== "auditando" && (
+                <p className="mt-4 rounded-md bg-secondary p-3 text-sm"><b>Decisión registrada:</b> {cur.decisionReason}</p>
+              )}
+              {(cur.status === "pendiente" || cur.status === "frenada") && (
                 <button onClick={() => start(cur.id)} disabled={busy} className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Auditar con el agente</button>
               )}
             </Panel>
@@ -164,6 +170,9 @@ function Inbox() {
             {cur.status === "retenida" && <Hitl id={cur.id} failed={(cur.checks ?? []).filter((c) => !c.passed)} />}
             {cur.receipt && <Receipt inv={cur} />}
             {cur.status === "rechazada" && <Panel><p className="text-destructive">✗ Pago rechazado. No se movió dinero.</p></Panel>}
+            {cur.status === "frenada" && (
+              <Panel><p className="text-destructive">⛔ El agente frenó esta factura. Un cobro duplicado o un beneficiario no permitido nunca se paga, ni siquiera con una excepción. Si el beneficiario es legítimo, agrégalo en Políticas y vuelve a auditar.</p></Panel>
+            )}
           </>
         )}
       </div>
