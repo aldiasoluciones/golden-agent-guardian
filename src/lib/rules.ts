@@ -34,7 +34,7 @@ export function explain(checks: Check[]): string {
   const d = decide(checks);
   const failed = checks.filter((c) => !c.passed);
   if (d === "pagar") return `PAGÓ: cumplió las ${checks.length} reglas de la empresa.`;
-  const why = failed.map((f) => `${f.label}: ${f.detail}`).join(" | ");
+  const why = failed.map((f) => `✗ No cumple «${f.label}» — ${f.detail}`).join(" | ");
   return d === "frenar"
     ? `FRENÓ: el agente nunca paga esto por su cuenta. ${why}`
     : `ESCALÓ a una persona: ${why}`;
