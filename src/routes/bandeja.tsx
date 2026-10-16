@@ -101,9 +101,9 @@ function Inbox() {
             onClick={() => fileRef.current?.click()}
             className="cursor-pointer rounded-md border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary"
           >
-            {uploading ? "La IA está leyendo la factura…" : "Arrastra o haz clic · PDF, imagen o texto"}
+            {uploading ? "La IA está leyendo la factura…" : "Arrastra o haz clic · PDF, imagen, correo o chat (texto)"}
           </div>
-          <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
+          <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
           {upErr && <p className="mt-2 text-sm text-destructive">{upErr}</p>}
         </Panel>
         <Panel title={`Cuentas por pagar (${invoices.length})`}>
@@ -112,7 +112,7 @@ function Inbox() {
             {invoices.map((i) => (
               <li key={i.id}>
                 <button onClick={() => setSel(i.id)} className={`w-full rounded-md border p-3 text-left text-sm ${sel === i.id ? "border-primary bg-secondary" : "border-border hover:bg-secondary"}`}>
-                  <div className="flex justify-between gap-2"><span className="truncate">{i.vendorName}</span><span className="font-mono">{fmt(i.amount)}</span></div>
+                  <div className="flex justify-between gap-2"><span className="truncate">{i.vendorName}</span><span className="font-mono">{money(i.amount, i.currency)}</span></div>
                   <div className="mt-1 flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{i.number}</span><StatusBadge s={i.status} /></div>
                 </button>
               </li>
@@ -130,12 +130,12 @@ function Inbox() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xl font-semibold">{cur.vendorName}</p>
-                  <p className="font-mono text-xs text-muted-foreground">NIT {cur.nit} · {cur.number} · vence {cur.dueDate} · {cur.category}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{cur.nit} · {cur.number} · vence {cur.dueDate} · {cur.category}</p>
                   <p className="mt-2 text-sm">{cur.description}</p>
                   <p className="mt-1 font-mono text-xs text-muted-foreground">Pagar a: {cur.bankAccount}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-2xl font-semibold">{fmt(cur.amount)}</p>
+                  <p className="font-mono text-2xl font-semibold">{money(cur.amount, cur.currency)}</p>
                   <StatusBadge s={cur.status} />
                 </div>
               </div>
