@@ -10,33 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
+import { Route as BandejaRouteImport } from './routes/bandeja'
+import { Route as PoliticasRouteImport } from './routes/politicas'
+import { Route as ApiAuditRouteImport } from './routes/api/audit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BandejaRoute = BandejaRouteImport.update({
+  id: '/bandeja',
+  path: '/bandeja',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticasRoute = PoliticasRouteImport.update({
+  id: '/politicas',
+  path: '/politicas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuditRoute = ApiAuditRouteImport.update({
+  id: '/api/audit',
+  path: '/api/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/bandeja': typeof BandejaRoute
+  '/politicas': typeof PoliticasRoute
+  '/api/audit': typeof ApiAuditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/bandeja': typeof BandejaRoute
+  '/politicas': typeof PoliticasRoute
+  '/api/audit': typeof ApiAuditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/bandeja': typeof BandejaRoute
+  '/politicas': typeof PoliticasRoute
+  '/api/audit': typeof ApiAuditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/auditoria' | '/bandeja' | '/politicas' | '/api/audit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/auditoria' | '/bandeja' | '/politicas' | '/api/audit'
+  id: '__root__' | '/' | '/auditoria' | '/bandeja' | '/politicas' | '/api/audit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditoriaRoute: typeof AuditoriaRoute
+  BandejaRoute: typeof BandejaRoute
+  PoliticasRoute: typeof PoliticasRoute
+  ApiAuditRoute: typeof ApiAuditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +88,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bandeja': {
+      id: '/bandeja'
+      path: '/bandeja'
+      fullPath: '/bandeja'
+      preLoaderRoute: typeof BandejaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politicas': {
+      id: '/politicas'
+      path: '/politicas'
+      fullPath: '/politicas'
+      preLoaderRoute: typeof PoliticasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/audit': {
+      id: '/api/audit'
+      path: '/api/audit'
+      fullPath: '/api/audit'
+      preLoaderRoute: typeof ApiAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditoriaRoute: AuditoriaRoute,
+  BandejaRoute: BandejaRoute,
+  PoliticasRoute: PoliticasRoute,
+  ApiAuditRoute: ApiAuditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
