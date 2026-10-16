@@ -3,8 +3,9 @@ import type { InvoiceStatus } from "@/lib/types";
 const STATUS: Record<InvoiceStatus, { label: string; cls: string }> = {
   pendiente: { label: "Pendiente", cls: "bg-muted text-muted-foreground" },
   auditando: { label: "Auditando…", cls: "bg-secondary text-foreground animate-pulse" },
-  pagada: { label: "Pagada (auto)", cls: "bg-primary/15 text-primary" },
-  retenida: { label: "Retenida · requiere aprobación", cls: "bg-warning/15 text-warning" },
+  pagada: { label: "Pagó el agente", cls: "bg-primary/15 text-primary" },
+  retenida: { label: "Escalada · espera aprobación", cls: "bg-warning/15 text-warning" },
+  frenada: { label: "Frenada", cls: "bg-destructive/15 text-destructive" },
   aprobada: { label: "Pagada (aprobación humana)", cls: "bg-primary/15 text-primary" },
   rechazada: { label: "Rechazada", cls: "bg-destructive/15 text-destructive" },
 };
