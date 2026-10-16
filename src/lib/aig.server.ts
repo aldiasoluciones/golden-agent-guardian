@@ -10,7 +10,7 @@ export async function* streamResponses(body: Record<string, unknown>, signal?: A
   if (!key) throw new AigError(500, "LOVABLE_API_KEY no configurada");
   const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
-    signal,
+    signal: signal ?? null,
     headers: {
       Authorization: `Bearer ${key}`,
       "Lovable-API-Key": key,

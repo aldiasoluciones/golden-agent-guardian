@@ -36,8 +36,8 @@ export type Receipt = {
   at: string;
   hash: string;
   method: "auto" | "humano";
-  approver?: string;
-  justification?: string;
+  approver?: string | undefined;
+  justification?: string | undefined;
 };
 
 export type Invoice = {
