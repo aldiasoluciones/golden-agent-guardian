@@ -56,7 +56,7 @@ function Inbox() {
         : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
       const res = await extract({ data: payload });
       if (!res.ok) return setUpErr(`No se pudo leer la factura: ${res.error}`);
-      const x = res.invoice;
+      const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; category?: string; dueDate?: string; description?: string };
       const inv = addInvoice({
         number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
         bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, category: String(x.category || "Otro"),
