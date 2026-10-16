@@ -139,7 +139,10 @@ function Inbox() {
                   <StatusBadge s={cur.status} />
                 </div>
               </div>
-              {(cur.status === "pendiente") && (
+              {cur.decisionReason && cur.status !== "auditando" && (
+                <p className="mt-4 rounded-md bg-secondary p-3 text-sm"><b>Decisión registrada:</b> {cur.decisionReason}</p>
+              )}
+              {(cur.status === "pendiente" || cur.status === "frenada") && (
                 <button onClick={() => start(cur.id)} disabled={busy} className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Auditar con el agente</button>
               )}
             </Panel>
@@ -167,6 +170,9 @@ function Inbox() {
             {cur.status === "retenida" && <Hitl id={cur.id} failed={(cur.checks ?? []).filter((c) => !c.passed)} />}
             {cur.receipt && <Receipt inv={cur} />}
             {cur.status === "rechazada" && <Panel><p className="text-destructive">✗ Pago rechazado. No se movió dinero.</p></Panel>}
+            {cur.status === "frenada" && (
+              <Panel><p className="text-destructive">⛔ El agente frenó esta factura. Un cobro duplicado o un beneficiario no permitido nunca se paga, ni siquiera con una excepción. Si el beneficiario es legítimo, agrégalo en Políticas y vuelve a auditar.</p></Panel>
+            )}
           </>
         )}
       </div>
