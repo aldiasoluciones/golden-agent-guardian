@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Panel } from "@/components/ui-bits";
+import type { Invoice } from "@/lib/types";
 import { Receipt } from "@/components/receipt";
-import { fmt } from "@/lib/rules";
+import { fmt, money } from "@/lib/rules";
+import { StatusBadge, inputCls } from "@/components/ui-bits";
 import { useAppState } from "@/lib/store";
 
 export const Route = createFileRoute("/auditoria")({
@@ -44,7 +46,8 @@ function AuditPage() {
         </div>
         <button onClick={exportCsv} className="rounded-md border border-border px-4 py-2 text-sm">Exportar CSV</button>
       </div>
-      <Panel>
+      <InvoiceDb invoices={invoices} onOpen={setOpen} />
+      <Panel title="Bitácora de eventos">
         {audit.length === 0 && <p className="text-sm text-muted-foreground">Sin eventos todavía.</p>}
         <ul className="space-y-3">
           {audit.map((e) => {
@@ -70,5 +73,65 @@ function AuditPage() {
         </div>
       )}
     </div>
+  );
+}
+
+const DEC: Record<string, (i: Invoice) => boolean> = {
+  todas: () => true,
+  pagada: (i) => i.status === "pagada" || i.status === "aprobada",
+  frenada: (i) => i.status === "frenada" || i.status === "rechazada",
+  escalada: (i) => i.status === "retenida",
+};
+
+function InvoiceDb({ invoices, onOpen }: { invoices: Invoice[]; onOpen: (id: string) => void }) {
+  const [ch, setCh] = useState("todos");
+  const [dec, setDec] = useState("todas");
+  const [q, setQ] = useState("");
+  const [n, setN] = useState(50);
+  const ql = q.toLowerCase();
+  const rows = invoices.filter((i) => (ch === "todos" || (i.channel ?? "manual") === ch) && DEC[dec]!(i) && (!ql || `${i.id} ${i.number} ${i.nit} ${i.vendorName} ${i.batchId ?? ""}`.toLowerCase().includes(ql)));
+  const exportCsv = () => {
+    const head = ["id", "numero", "canal", "remitente", "proveedor", "nit", "cuenta", "monto", "moneda", "estado", "prioridad", "cola", "lote", "ms_decision", "recibida", "comprobante", "hash", "porque"];
+    const data = rows.map((i) => [i.id, i.number, i.channel ?? "manual", i.sender ?? "", i.vendorName, i.nit, i.bankAccount, i.amount, i.currency, i.status, i.priority ?? "", i.queue ?? "", i.batchId ?? "", i.latencyMs ?? "", i.createdAt, i.receipt?.id ?? "", i.receipt?.hash ?? "", (i.decisionReason ?? "").replace(/"/g, "'")]);
+    const blob = new Blob([[head, ...data].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "aldia-base-facturas.csv";
+    a.click();
+  };
+  const sel = "rounded-md border border-input bg-background px-2 py-2 text-sm";
+  return (
+    <Panel title={`Base de facturas · ${rows.length} de ${invoices.length}`}>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <select className={sel} value={ch} onChange={(e) => setCh(e.target.value)}>
+          <option value="todos">Todos los canales</option><option value="whatsapp">WhatsApp</option><option value="correo">Correo</option><option value="manual">Bandeja</option>
+        </select>
+        <select className={sel} value={dec} onChange={(e) => setDec(e.target.value)}>
+          <option value="todas">Todas las decisiones</option><option value="pagada">Pagadas</option><option value="frenada">Frenadas</option><option value="escalada">Escaladas</option>
+        </select>
+        <input className={`${inputCls} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar ID, número, NIT, lote…" />
+        <button onClick={exportCsv} className="rounded-md border border-border px-3 py-2 text-sm">Exportar base (CSV)</button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead className="font-mono uppercase text-muted-foreground"><tr><th className="p-2">ID</th><th className="p-2">Canal</th><th className="p-2">Proveedor</th><th className="p-2">Monto</th><th className="p-2">Decisión</th><th className="p-2">Cola</th><th className="p-2">ms</th><th className="p-2">Por qué</th></tr></thead>
+          <tbody className="divide-y divide-border">
+            {rows.slice(0, n).map((i) => (
+              <tr key={i.id} className="align-top">
+                <td className="p-2 font-mono">{i.id}<div className="text-muted-foreground">{i.number}</div></td>
+                <td className="p-2">{i.channel === "whatsapp" ? "WhatsApp" : i.channel === "correo" ? "Correo" : "Bandeja"}<div className="text-muted-foreground">{i.sender}</div></td>
+                <td className="p-2">{i.vendorName}<div className="text-muted-foreground">{i.nit}</div></td>
+                <td className="p-2 whitespace-nowrap">{money(i.amount, i.currency)}</td>
+                <td className="p-2"><StatusBadge s={i.status} />{i.receipt && <button className="mt-1 block text-primary" onClick={() => onOpen(i.id)}>comprobante</button>}</td>
+                <td className="p-2">{i.status === "retenida" ? `${i.queue === "lote" ? `Lote ${i.batchId}` : "Revisión"}${i.priority === "alta" ? " · alta" : ""}` : "—"}</td>
+                <td className="p-2 font-mono">{i.latencyMs ?? "—"}</td>
+                <td className="p-2 min-w-64">{i.decisionReason}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {rows.length > n && <button onClick={() => setN(n + 100)} className="mt-3 text-sm text-primary">Ver 100 más</button>}
+    </Panel>
   );
 }
