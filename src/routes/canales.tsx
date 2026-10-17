@@ -86,7 +86,7 @@ function Chat({ msgs, tone }: { msgs: Msg[]; tone: "wa" | "mail" }) {
   );
 }
 
-function WhatsApp() {
+export function WhatsApp() {
   const phone = "+57 310 555 0142";
   const { msgs, busy, send } = useLive("whatsapp", phone);
   const [t, setT] = useState("");
@@ -107,7 +107,7 @@ function WhatsApp() {
   );
 }
 
-function Correo() {
+export function Correo() {
   const from = "facturacion@proveedor.co";
   const { msgs, busy, send } = useLive("correo", from);
   const [subject, setSubject] = useState("");
@@ -130,7 +130,7 @@ function Correo() {
   );
 }
 
-function Burst() {
+export function Burst() {
   const [st, setSt] = useState<BurstStats | null>(null);
   const [running, setRunning] = useState(false);
   const sig = useRef({ stop: false });

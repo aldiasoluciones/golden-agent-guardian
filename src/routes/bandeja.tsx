@@ -1,16 +1,13 @@
 import { BackToValidations } from "@/components/back-link";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Panel, StatusBadge, inputCls } from "@/components/ui-bits";
 import { Receipt } from "@/components/receipt";
-import { SAMPLES, SAMPLE_META, addInvoice, humanDecision, runAgent, type SampleKey } from "@/lib/agent";
-import { extractInvoice } from "@/lib/extract.functions";
-import { money } from "@/lib/rules";
-import { setTenant, useAppState } from "@/lib/store";
-import { matchTenant } from "@/lib/tenants";
+import { humanDecision, runAgent } from "@/lib/agent";
+import { fmt, invCOP, money } from "@/lib/rules";
+import { budgetSummary, pendingValidation } from "@/lib/treasury";
+import { useAppState } from "@/lib/store";
 import type { Check, Invoice } from "@/lib/types";
-import WOW_NAMES from "@/lib/wow-names.json";
 
 export const Route = createFileRoute("/bandeja")({
   head: () => ({
@@ -26,18 +23,16 @@ export const Route = createFileRoute("/bandeja")({
   component: () => <><BackToValidations /><Inbox /></>,
 });
 
-const EXPECT_CLS = { pagar: "border-primary/50", frenar: "border-destructive/50", escalar: "border-warning/60" } as const;
-const EXPECT_TXT = { pagar: "→ paga", frenar: "→ frena", escalar: "→ escala" } as const;
 
 export function Inbox() {
-  const { invoices } = useAppState();
+  const { invoices, policies } = useAppState();
+  const budget = budgetSummary(invoices, policies, new Date().toISOString().slice(0, 7));
+  const frozen = invoices.filter((i) => i.status === "frenada" || i.status === "rechazada");
+  const protectedCOP = frozen.reduce((s, i) => s + invCOP(i, policies), 0);
+  const outside = invoices.filter((i) => i.status === "pagada" && i.checks?.some((c) => !c.passed)).length;
   const [sel, setSel] = useState<string | null>(null);
   const [live, setLive] = useState<{ id: string; checks: Check[]; reasoning: string; text: string; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [upErr, setUpErr] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const extract = useServerFn(extractInvoice);
 
   const start = async (id: string) => {
     setSel(id);
@@ -51,108 +46,6 @@ export function Inbox() {
     setBusy(false);
   };
 
-  const quick = (k: SampleKey) => start(addInvoice(SAMPLES[k]()).id);
-
-  const [batch, setBatch] = useState<{ total: number; done: number; pagada: number; frenada: number; escalada: number; errors: string[] } | null>(null);
-
-  const read = async (f: File): Promise<() => string> => {
-    if (f.size > 4_500_000) throw new Error(`${f.name}: supera 4.5 MB`);
-    const isText = /\.(txt|csv|json|xml|md|eml)$/i.test(f.name) || f.type.startsWith("text/");
-    const payload = isText
-      ? { fileName: f.name, mime: f.type, text: await f.text() }
-      : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
-    const res = await extract({ data: payload });
-    if (!res.ok) throw new Error(`${f.name}: ${res.error}`);
-    const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string; clientName?: string; clientTaxId?: string; clientEmail?: string };
-    // El agente identifica a qué empresa pagadora va dirigida y la enruta a su bóveda y políticas.
-    const hasPayer = !!(x.clientName || x.clientTaxId || x.clientEmail);
-    const m = hasPayer ? matchTenant({ name: x.clientName, taxId: x.clientTaxId, email: x.clientEmail }) : null;
-    const payer: Invoice["payer"] = m
-      ? { status: "detectado", name: m.tenant.name, how: m.how }
-      : hasPayer
-        ? { status: "desconocido", name: String(x.clientName || x.clientTaxId || x.clientEmail), how: "sin coincidencia" }
-        : { status: "sin-dato", name: "No indicado", how: "la factura no dice a quién va dirigida → rechazada" };
-    return () => {
-    if (m) setTenant(m.tenant.id);
-    return addInvoice({
-      number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
-      bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
-      category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`, payer,
-    }).id;
-    };
-  };
-  const ingest = async (f: File) => (await read(f))();
-
-  const onFile = async (f: File) => {
-    setUpErr("");
-    setUploading(true);
-    try {
-      await start(await ingest(f));
-    } catch (e) {
-      setUpErr((e as Error).message);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const onFiles = async (list: File[]) => {
-    if (list.length === 0) return;
-    if (list.length === 1) return onFile(list[0]!);
-    setUpErr("");
-    setUploading(true);
-    setBusy(true);
-    setBatch({ total: list.length, done: 0, pagada: 0, frenada: 0, escalada: 0, errors: [] });
-    // Lectura con IA en paralelo (3 a la vez); la decisión la toma el motor en orden de llegada.
-    const ids: (string | null)[] = new Array(list.length).fill(null);
-    let next = 0;
-    let decided = 0;
-    let chain = Promise.resolve();
-    const worker = async () => {
-      while (next < list.length) {
-        const i = next++;
-        try {
-          const commit = await read(list[i]!);
-          chain = chain.then(async () => {
-            const id = commit();
-            ids[i] = id;
-            await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
-          });
-          await chain;
-        } catch (e) {
-          setBatch((b) => b && { ...b, errors: [...b.errors, (e as Error).message] });
-        }
-        decided++;
-        setBatch((b) => b && { ...b, done: decided });
-      }
-    };
-    await Promise.all([worker(), worker(), worker()]);
-    setUploading(false);
-    setBusy(false);
-    const last = ids.filter(Boolean).pop();
-    if (last) setSel(last);
-  };
-
-  const demoBatch = async () => {
-    const names = ["FACTURE_PA-9410_ORIGINALE.pdf", "FACTURE_PA-9410_DUPLICATA.pdf", "RECHNUNG_BER-2026-884.pdf", "FATURA_PA-BR-7714.pdf", "INVOICE_TL-5590.pdf", "FACTURA_SIN-PAGADOR_SP-3301.pdf", "INVOICE_EMPRESA-AJENA_EX-7720.pdf"];
-    const files = await Promise.all(names.map(async (n) => new File([await (await fetch(`/downloads/${n}`)).blob()], n, { type: "application/pdf" })));
-    await onFiles(files);
-  };
-
-  const wowBatch = async () => {
-    const files = await Promise.all(WOW_NAMES.map(async (n) => new File([await (await fetch(`/downloads/lote-wow/${n}`)).blob()], n, { type: "application/pdf" })));
-    await onFiles(files);
-  };
-
-  // Marcador del lote: cuenta las decisiones reales de las facturas procesadas por archivo.
-  const batchStats = batch && (() => {
-    const recent = invoices.filter((i) => i.source?.startsWith("Archivo:")).slice(0, batch.total);
-    const s = { pagada: 0, frenada: 0, escalada: 0 };
-    for (const i of recent) {
-      const st = String((i as { status?: string }).status ?? "");
-      if (st === "pagada" || st === "aprobada") s.pagada++; else if (st === "frenada" || st === "rechazada") s.frenada++; else if (st === "retenida") s.escalada++;
-    }
-    return s;
-  })();
 
   const cur = invoices.find((i) => i.id === sel);
   const isLive = live && live.id === sel;
@@ -160,72 +53,17 @@ export function Inbox() {
   const text = isLive ? live.text : cur?.aiReasoning ?? "";
 
   return (
+    <div className="space-y-6">
+    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <Kpi label="Pendientes de tu firma" value={String(pendingValidation(invoices).length)} cls="text-warning" />
+      <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Pagado vs. presupuesto</p><p className="mt-1 font-mono text-lg">{budget.percent.toFixed(0)}%</p><progress aria-label="Presupuesto utilizado" max={100} value={Math.min(100, budget.percent)} className="mt-2 h-1.5 w-full" /><p className="mt-1 truncate text-[11px] text-muted-foreground">{fmt(budget.amount)} de {fmt(policies.periodLimit)}</p></div>
+      <Kpi label="Capital protegido" value={fmt(protectedCOP)} sub={`${frozen.length} frenadas`} cls="text-destructive" />
+      <Kpi label="Pagos fuera de reglas" value={String(outside)} sub="Verificado por el motor" cls={outside ? "text-destructive" : "text-primary"} />
+    </section>
     <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       <div className="space-y-4">
-        <Panel title="Set del reto · un clic por caso">
-          <div className="grid gap-2">
-            {SAMPLE_META.map((m) => (
-              <button key={m.key} disabled={busy} onClick={() => quick(m.key)}
-                className={`rounded-md border-l-4 border border-border px-3 py-2 text-left text-sm hover:bg-secondary disabled:opacity-50 ${EXPECT_CLS[m.expect]}`}>
-                <span className="flex justify-between gap-2 font-semibold">{m.label}<span className="font-mono text-[11px] font-normal text-muted-foreground">{EXPECT_TXT[m.expect]}</span></span>
-                <span className="block text-xs text-muted-foreground">{m.hint}</span>
-              </button>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Subir facturas (una o muchas)">
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); if (!uploading) onFiles(Array.from(e.dataTransfer.files)); }}
-            onClick={() => !uploading && fileRef.current?.click()}
-            className="cursor-pointer rounded-md border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary"
-          >
-            {uploading ? (batch ? `Procesando lote: ${batch.done} de ${batch.total}…` : "La IA está leyendo la factura…") : "Arrastra o haz clic · selecciona varias facturas a la vez (PDF, imagen, correo o texto)"}
-          </div>
-          <input ref={fileRef} type="file" multiple hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ""; onFiles(fs); }} />
-          <button disabled={uploading || busy} onClick={demoBatch}
-            className="mt-3 w-full rounded-md border border-primary/60 px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:opacity-50">
-            Procesar en lote las 7 facturas PDF de prueba
-          </button>
-          <button disabled={uploading || busy} onClick={wowBatch}
-            className="mt-2 w-full rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50">
-            ⚡ Lote WOW: 100 facturas globales (5 idiomas)
-          </button>
-          <a href="/downloads/lote-wow-100-facturas.zip" download className="mt-1 block text-center text-xs text-primary underline">Descargar las 100 facturas (ZIP)</a>
-          {batch && (
-            <div className="mt-3 rounded-md border border-border p-3 text-xs">
-              <div className="mb-1 flex justify-between font-semibold"><span>Lote masivo</span><span>{batch.done}/{batch.total}</span></div>
-              <div className="h-2 overflow-hidden rounded bg-secondary"><div className="h-full bg-primary transition-all" style={{ width: `${(batch.done / batch.total) * 100}%` }} /></div>
-              {batchStats && (
-                <div className="mt-2 flex gap-3">
-                  <span className="text-primary">Pagadas {batchStats.pagada}</span>
-                  <span className="text-destructive">Frenadas {batchStats.frenada}</span>
-                  <span className="text-warning">Escaladas {batchStats.escalada}</span>
-                </div>
-              )}
-              {batch.errors.map((er) => <p key={er} className="mt-1 text-destructive">{er}</p>)}
-            </div>
-          )}
-          {upErr && <p className="mt-2 text-sm text-destructive">{upErr}</p>}
-          <div className="mt-3 text-xs text-muted-foreground">
-            <p className="mb-1 font-semibold">Facturas PDF de prueba para adjuntar:</p>
-            <ul className="space-y-1">
-              {[
-                ["FACTURE_PA-9410_ORIGINALE.pdf", "Francés · válida · AL DIA Demo"],
-                ["FACTURE_PA-9410_DUPLICATA.pdf", "Francés · duplicada · AL DIA Demo"],
-                ["RECHNUNG_BER-2026-884.pdf", "Alemán · fuera de lista blanca · Vértice Logistics"],
-                ["FATURA_PA-BR-7714.pdf", "Portugués · cuenta falsa · Boreal Studio"],
-                ["INVOICE_TL-5590.pdf", "Inglés · supera el límite · Nova Commerce SpA"],
-                ["FACTURA_SIN-PAGADOR_SP-3301.pdf", "Español · sin pagador → rechazada"],
-                ["INVOICE_EMPRESA-AJENA_EX-7720.pdf", "Inglés · empresa ajena → frenada"],
-              ].map(([f, l]) => (
-                <li key={f}><a href={`/downloads/${f}`} download={f} className="text-primary underline">{l}</a></li>
-              ))}
-            </ul>
-          </div>
-        </Panel>
         <Panel title={`Cuentas por pagar (${invoices.length})`}>
-          {invoices.length === 0 && <p className="text-sm text-muted-foreground">Vacía. Usa una prueba rápida.</p>}
+          {invoices.length === 0 && <p className="text-sm text-muted-foreground">Vacía. Envía facturas desde Demo.</p>}
           <ul className="space-y-2">
             {invoices.map((i) => (
               <li key={i.id}>
@@ -300,7 +138,12 @@ export function Inbox() {
         )}
       </div>
     </div>
+    </div>
   );
+}
+
+function Kpi({ label, value, sub, cls }: { label: string; value: string; sub?: string; cls: string }) {
+  return <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">{label}</p><p className={`mt-1 truncate font-mono text-2xl ${cls}`}>{value}</p>{sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}</div>;
 }
 
 function Hitl({ id, failed }: { id: string; failed: Check[] }) {
