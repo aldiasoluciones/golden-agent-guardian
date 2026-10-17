@@ -8,6 +8,7 @@ import { extractInvoice } from "@/lib/extract.functions";
 import { money } from "@/lib/rules";
 import { useAppState } from "@/lib/store";
 import type { Check } from "@/lib/types";
+import WOW_NAMES from "@/lib/wow-names.json";
 
 export const Route = createFileRoute("/bandeja")({
   head: () => ({
@@ -122,6 +123,11 @@ function Inbox() {
     await onFiles(files);
   };
 
+  const wowBatch = async () => {
+    const files = await Promise.all(WOW_NAMES.map(async (n) => new File([await (await fetch(`/downloads/lote-wow/${n}`)).blob()], n, { type: "application/pdf" })));
+    await onFiles(files);
+  };
+
   // Marcador del lote: cuenta las decisiones reales de las facturas procesadas por archivo.
   const batchStats = batch && (() => {
     const recent = invoices.filter((i) => i.source?.startsWith("Archivo:")).slice(0, batch.total);
@@ -166,6 +172,11 @@ function Inbox() {
             className="mt-3 w-full rounded-md border border-primary/60 px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:opacity-50">
             Procesar en lote las 5 facturas PDF de prueba
           </button>
+          <button disabled={uploading || busy} onClick={wowBatch}
+            className="mt-2 w-full rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50">
+            ⚡ Lote WOW: 100 facturas globales (5 idiomas)
+          </button>
+          <a href="/downloads/lote-wow-100-facturas.zip" download className="mt-1 block text-center text-xs text-primary underline">Descargar las 100 facturas (ZIP)</a>
           {batch && (
             <div className="mt-3 rounded-md border border-border p-3 text-xs">
               <div className="mb-1 flex justify-between font-semibold"><span>Lote masivo</span><span>{batch.done}/{batch.total}</span></div>
