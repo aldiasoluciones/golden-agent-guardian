@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnaliticaRouteImport } from './routes/analitica'
 import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as BandejaRouteImport } from './routes/bandeja'
@@ -21,6 +22,11 @@ import { Route as ApiPublicV1DecideRouteImport } from './routes/api/public/v1/de
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnaliticaRoute = AnaliticaRouteImport.update({
+  id: '/analitica',
+  path: '/analitica',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiDocsRoute = ApiDocsRouteImport.update({
@@ -61,6 +67,7 @@ const ApiPublicV1DecideRoute = ApiPublicV1DecideRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analitica': typeof AnaliticaRoute
   '/api-docs': typeof ApiDocsRoute
   '/auditoria': typeof AuditoriaRoute
   '/bandeja': typeof BandejaRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analitica': typeof AnaliticaRoute
   '/api-docs': typeof ApiDocsRoute
   '/auditoria': typeof AuditoriaRoute
   '/bandeja': typeof BandejaRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analitica': typeof AnaliticaRoute
   '/api-docs': typeof ApiDocsRoute
   '/auditoria': typeof AuditoriaRoute
   '/bandeja': typeof BandejaRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analitica'
     | '/api-docs'
     | '/auditoria'
     | '/bandeja'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analitica'
     | '/api-docs'
     | '/auditoria'
     | '/bandeja'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analitica'
     | '/api-docs'
     | '/auditoria'
     | '/bandeja'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnaliticaRoute: typeof AnaliticaRoute
   ApiDocsRoute: typeof ApiDocsRoute
   AuditoriaRoute: typeof AuditoriaRoute
   BandejaRoute: typeof BandejaRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analitica': {
+      id: '/analitica'
+      path: '/analitica'
+      fullPath: '/analitica'
+      preLoaderRoute: typeof AnaliticaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api-docs': {
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnaliticaRoute: AnaliticaRoute,
   ApiDocsRoute: ApiDocsRoute,
   AuditoriaRoute: AuditoriaRoute,
   BandejaRoute: BandejaRoute,
