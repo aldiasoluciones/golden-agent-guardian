@@ -57,7 +57,7 @@ function useLive(channel: Channel, sender: string) {
       const r = await extract({ data: { fileName: `${channel}.txt`, mime: "text/plain", text } });
       if (r.ok) {
         const x = r.invoice;
-        data = { number: String(x.number || `MSG-${Date.now() % 10000}`), vendorName: String(x.vendorName), nit: String(x.nit), bankAccount: String(x.bankAccount), amount: Number(x.amount), currency: (x.currency as Currency) ?? "COP", category: String(x.category), dueDate: String(x.dueDate), description: String(x.description), source: "" };
+        data = { number: String(x["number"] || `MSG-${Date.now() % 10000}`), vendorName: String(x["vendorName"]), nit: String(x["nit"]), bankAccount: String(x["bankAccount"]), amount: Number(x["amount"]), currency: (x["currency"] as Currency) ?? "COP", category: String(x["category"]), dueDate: String(x["dueDate"]), description: String(x["description"]), source: "" };
       } else {
         setMsgs((m) => [...m, { from: "agent", text: `No pude leer el mensaje (${r.error}). Usa un mensaje de ejemplo.` }]);
         setBusy(false);
