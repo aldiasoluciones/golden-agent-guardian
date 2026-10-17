@@ -50,30 +50,88 @@ function Inbox() {
 
   const quick = (k: SampleKey) => start(addInvoice(SAMPLES[k]()).id);
 
+  const [batch, setBatch] = useState<{ total: number; done: number; pagada: number; frenada: number; escalada: number; errors: string[] } | null>(null);
+
+  const ingest = async (f: File): Promise<string> => {
+    if (f.size > 4_500_000) throw new Error(`${f.name}: supera 4.5 MB`);
+    const isText = /\.(txt|csv|json|xml|md|eml)$/i.test(f.name) || f.type.startsWith("text/");
+    const payload = isText
+      ? { fileName: f.name, mime: f.type, text: await f.text() }
+      : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
+    const res = await extract({ data: payload });
+    if (!res.ok) throw new Error(`${f.name}: ${res.error}`);
+    const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string };
+    return addInvoice({
+      number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
+      bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
+      category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`,
+    }).id;
+  };
+
   const onFile = async (f: File) => {
     setUpErr("");
-    if (f.size > 4_500_000) return setUpErr("El archivo supera 4.5 MB.");
     setUploading(true);
     try {
-      const isText = /\.(txt|csv|json|xml|md|eml)$/i.test(f.name) || f.type.startsWith("text/");
-      const payload = isText
-        ? { fileName: f.name, mime: f.type, text: await f.text() }
-        : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
-      const res = await extract({ data: payload });
-      if (!res.ok) return setUpErr(`No se pudo leer la factura: ${res.error}`);
-      const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string };
-      const inv = addInvoice({
-        number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
-        bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
-        category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`,
-      });
-      await start(inv.id);
+      await start(await ingest(f));
     } catch (e) {
       setUpErr((e as Error).message);
     } finally {
       setUploading(false);
     }
   };
+
+  const onFiles = async (list: File[]) => {
+    if (list.length === 0) return;
+    if (list.length === 1) return onFile(list[0]!);
+    setUpErr("");
+    setUploading(true);
+    setBusy(true);
+    setBatch({ total: list.length, done: 0, pagada: 0, frenada: 0, escalada: 0, errors: [] });
+    // Lectura con IA en paralelo (3 a la vez); la decisión la toma el motor en orden de llegada.
+    const ids: (string | null)[] = new Array(list.length).fill(null);
+    let next = 0;
+    let decided = 0;
+    let chain = Promise.resolve();
+    const worker = async () => {
+      while (next < list.length) {
+        const i = next++;
+        try {
+          ids[i] = await ingest(list[i]!);
+          const id = ids[i]!;
+          chain = chain.then(async () => {
+            await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
+          });
+          await chain;
+        } catch (e) {
+          setBatch((b) => b && { ...b, errors: [...b.errors, (e as Error).message] });
+        }
+        decided++;
+        setBatch((b) => b && { ...b, done: decided });
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    setUploading(false);
+    setBusy(false);
+    const last = ids.filter(Boolean).pop();
+    if (last) setSel(last);
+  };
+
+  const demoBatch = async () => {
+    const names = ["FACTURE_PA-9410_ORIGINALE.pdf", "FACTURE_PA-9410_DUPLICATA.pdf", "RECHNUNG_BER-2026-884.pdf", "FATURA_PA-BR-7714.pdf", "INVOICE_TL-5590.pdf"];
+    const files = await Promise.all(names.map(async (n) => new File([await (await fetch(`/downloads/${n}`)).blob()], n, { type: "application/pdf" })));
+    await onFiles(files);
+  };
+
+  // Marcador del lote: cuenta las decisiones reales de las facturas procesadas por archivo.
+  const batchStats = batch && (() => {
+    const recent = invoices.filter((i) => i.source?.startsWith("Archivo:")).slice(0, batch.total);
+    const s = { pagada: 0, frenada: 0, escalada: 0 };
+    for (const i of recent) {
+      const st = String((i as { status?: string }).status ?? "");
+      if (st === "pagada" || st === "aprobada") s.pagada++; else if (st === "frenada" || st === "rechazada") s.frenada++; else if (st === "retenida") s.escalada++;
+    }
+    return s;
+  })();
 
   const cur = invoices.find((i) => i.id === sel);
   const isLive = live && live.id === sel;
@@ -94,16 +152,34 @@ function Inbox() {
             ))}
           </div>
         </Panel>
-        <Panel title="Subir factura">
+        <Panel title="Subir facturas (una o muchas)">
           <div
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}
-            onClick={() => fileRef.current?.click()}
+            onDrop={(e) => { e.preventDefault(); if (!uploading) onFiles(Array.from(e.dataTransfer.files)); }}
+            onClick={() => !uploading && fileRef.current?.click()}
             className="cursor-pointer rounded-md border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary"
           >
-            {uploading ? "La IA está leyendo la factura…" : "Arrastra o haz clic · PDF, imagen, correo o chat (texto)"}
+            {uploading ? (batch ? `Procesando lote: ${batch.done} de ${batch.total}…` : "La IA está leyendo la factura…") : "Arrastra o haz clic · selecciona varias facturas a la vez (PDF, imagen, correo o texto)"}
           </div>
-          <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
+          <input ref={fileRef} type="file" multiple hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ""; onFiles(fs); }} />
+          <button disabled={uploading || busy} onClick={demoBatch}
+            className="mt-3 w-full rounded-md border border-primary/60 px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:opacity-50">
+            Procesar en lote las 5 facturas PDF de prueba
+          </button>
+          {batch && (
+            <div className="mt-3 rounded-md border border-border p-3 text-xs">
+              <div className="mb-1 flex justify-between font-semibold"><span>Lote masivo</span><span>{batch.done}/{batch.total}</span></div>
+              <div className="h-2 overflow-hidden rounded bg-secondary"><div className="h-full bg-primary transition-all" style={{ width: `${(batch.done / batch.total) * 100}%` }} /></div>
+              {batchStats && (
+                <div className="mt-2 flex gap-3">
+                  <span className="text-primary">Pagadas {batchStats.pagada}</span>
+                  <span className="text-destructive">Frenadas {batchStats.frenada}</span>
+                  <span className="text-warning">Escaladas {batchStats.escalada}</span>
+                </div>
+              )}
+              {batch.errors.map((er) => <p key={er} className="mt-1 text-destructive">{er}</p>)}
+            </div>
+          )}
           {upErr && <p className="mt-2 text-sm text-destructive">{upErr}</p>}
           <div className="mt-3 text-xs text-muted-foreground">
             <p className="mb-1 font-semibold">Facturas PDF de prueba para adjuntar:</p>
