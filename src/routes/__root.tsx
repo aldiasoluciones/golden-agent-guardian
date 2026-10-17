@@ -94,8 +94,9 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const NAV: { to: "/" | "/politicas" | "/auditoria" | "/demo"; key: TKey }[] = [
-  { to: "/", key: "nav_treasury" },
+const NAV: { to: "/" | "/validaciones" | "/politicas" | "/auditoria" | "/demo"; key: TKey }[] = [
+  { to: "/", key: "nav_home" as TKey },
+  { to: "/validaciones", key: "nav_treasury" },
   { to: "/politicas", key: "nav_policies" },
   { to: "/auditoria", key: "nav_audit" },
   { to: "/demo", key: "nav_inbox" },
@@ -159,7 +160,7 @@ function RootComponent() {
                   className="rounded-full px-3 py-1.5 text-muted-foreground hover:text-foreground"
                   activeProps={{ className: "rounded-full px-3 py-1.5 bg-primary text-primary-foreground" }}
                 >
-                  {t(lang, n.key)}
+                  {n.to === "/" ? (lang === "en" ? "Home" : "Inicio") : t(lang, n.key)}
                 </Link>
               ))}
             </nav>
