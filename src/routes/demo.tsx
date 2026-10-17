@@ -1,23 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Inbox } from "./bandeja";
-import { Canales } from "./canales";
-import { ApiDocs } from "./api-docs";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Burst, Correo, WhatsApp } from "./canales";
+import { DemoUpload } from "@/components/demo-upload";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({ meta: [
     { title: "Demo completo — blinkagent by AL DIA" },
-    { name: "description", content: "Carga de facturas, WhatsApp, correo y API REST del agente en una sola vista." },
+    { name: "description", content: "Envía facturas por correo, WhatsApp o archivo y corre los lotes de prueba del reto." },
     { property: "og:title", content: "Demo completo — blinkagent by AL DIA" },
-    { property: "og:description", content: "Prueba el agente de punta a punta: archivos, canales y API." },
+    { property: "og:description", content: "Prueba el agente de punta a punta: canales, archivos y lotes verificables." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
   component: Demo,
 });
 
 function Demo() {
-  return <div className="space-y-12">
-    <section id="bandeja"><Inbox /></section>
-    <section id="canales" className="border-t border-border pt-10"><Canales /></section>
-    <section id="api" className="border-t border-border pt-10"><ApiDocs /></section>
+  return <div className="space-y-6">
+    <div>
+      <h1 className="text-3xl font-bold tracking-tight">Demo</h1>
+      <p className="mt-1 text-muted-foreground">Envía una factura por correo, WhatsApp o archivo. El motor decide: pagar, frenar o escalar.</p>
+    </div>
+    <div className="grid gap-6 lg:grid-cols-2"><Correo /><WhatsApp /></div>
+    <DemoUpload />
+    <Burst />
+    <p className="text-center text-xs text-muted-foreground"><Link to="/api-docs" className="text-primary underline">Ver API REST</Link></p>
   </div>;
 }
