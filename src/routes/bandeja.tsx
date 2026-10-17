@@ -128,7 +128,7 @@ function Inbox() {
     const s = { pagada: 0, frenada: 0, escalada: 0 };
     for (const i of recent) {
       const st = String((i as { status?: string }).status ?? "");
-      if (/pag/.test(st)) s.pagada++; else if (/fren|rechaz/.test(st)) s.frenada++; else if (/escal|revis|lote/.test(st)) s.escalada++;
+      if (st === "pagada" || st === "aprobada") s.pagada++; else if (st === "frenada" || st === "rechazada") s.frenada++; else if (st === "retenida") s.escalada++;
     }
     return s;
   })();
