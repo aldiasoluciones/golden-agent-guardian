@@ -1,4 +1,5 @@
 import { getTenants, flag } from "@/lib/tenants";
+import { CookieBanner, openCookiePrefs } from "@/components/cookie-banner";
 import { setTenant, useTenantId } from "@/lib/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -173,8 +174,14 @@ function RootComponent() {
           <Outlet />
         </main>
         <footer className="border-t border-border py-6 text-center font-mono text-xs text-muted-foreground">
-          {t(lang, "footer")}
+          <div>{t(lang, "footer")}</div>
+          <div className="mt-2 flex flex-wrap justify-center gap-4">
+            <Link to="/privacidad" className="underline">Privacidad y datos</Link>
+            <span>Ley 1581 · GDPR · LGPD · GLBA</span>
+            <button onClick={openCookiePrefs} className="underline">Preferencias de cookies</button>
+          </div>
         </footer>
+        <CookieBanner />
       </div>
     </QueryClientProvider>
   );
