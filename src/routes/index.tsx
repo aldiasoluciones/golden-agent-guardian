@@ -9,9 +9,9 @@ import { fmt, invCOP } from "@/lib/rules";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
-    { title: "Centro de Comando Financiero — AL DIA · Blinka Agent" },
+    { title: "Centro de Comando Financiero — AL DIA · blinkagent" },
     { name: "description", content: "Casos que requieren firma humana, presupuesto del mes y capital protegido de la empresa activa." },
-    { property: "og:title", content: "Centro de Comando Financiero — AL DIA · Blinka Agent" },
+    { property: "og:title", content: "Centro de Comando Financiero — AL DIA · blinkagent" },
     { property: "og:description", content: "Rigor bancario, operación en un toque: aprueba o rechaza excepciones auditables." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),

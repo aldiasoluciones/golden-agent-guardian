@@ -7,7 +7,7 @@ const Body = z.object({
   policies: z.record(z.any()),
 });
 
-const SYSTEM = `Eres "Blinka Agent", el agente de AL DIA, de cuentas por pagar que paga facturas en nombre de una empresa colombiana.
+const SYSTEM = `Eres "blinkagent", el agente de AL DIA, de cuentas por pagar que paga facturas en nombre de una empresa colombiana.
 Un motor de reglas determinista ya evaluó la factura; sus resultados son la autoridad y NO puedes contradecirlos.
 Tu trabajo: auditar en voz alta, en español, de forma breve y concreta.
 Formato (texto plano, sin markdown pesado):

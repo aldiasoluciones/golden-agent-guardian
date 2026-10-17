@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/v1/decide")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       GET: async () =>
         Response.json(
-          { service: "Blinka Agent by AL DIA", usage: "POST JSON a esta URL. Documentación en /api-docs", simulated: true },
+          { service: "blinkagent by AL DIA", usage: "POST JSON a esta URL. Documentación en /api-docs", simulated: true },
           { headers: CORS },
         ),
       POST: async ({ request }) => {

@@ -12,9 +12,9 @@ import type { Channel, Currency, Invoice } from "@/lib/types";
 export const Route = createFileRoute("/canales")({
   head: () => ({
     meta: [
-      { title: "Canales en vivo: WhatsApp y Correo — Blinka Agent by AL DIA" },
+      { title: "Canales en vivo: WhatsApp y Correo — blinkagent by AL DIA" },
       { name: "description", content: "Envía facturas por WhatsApp o correo y mira al agente decidir en vivo; prueba de ráfaga a 300 facturas por minuto." },
-      { property: "og:title", content: "WhatsApp y Correo en vivo — Blinka Agent by AL DIA" },
+      { property: "og:title", content: "WhatsApp y Correo en vivo — blinkagent by AL DIA" },
       { property: "og:description", content: "Pagar, frenar o escalar: el agente decide cada factura que llega por WhatsApp o correo." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

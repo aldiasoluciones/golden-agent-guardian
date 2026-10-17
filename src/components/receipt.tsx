@@ -4,7 +4,7 @@ import type { Invoice } from "@/lib/types";
 export function Receipt({ inv }: { inv: Invoice }) {
   const r = inv.receipt!;
   const download = () => {
-    const blob = new Blob([JSON.stringify({ emisor: "AL DIA · Blinka Agent", comprobante: r, decision: inv.decisionReason, factura: { ...inv, checks: undefined, aiReasoning: undefined } }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ emisor: "AL DIA · blinkagent", comprobante: r, decision: inv.decisionReason, factura: { ...inv, checks: undefined, aiReasoning: undefined } }, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${r.id}.json`;

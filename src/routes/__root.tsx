@@ -62,7 +62,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Blinka Agent by AL DIA" },
+      { title: "blinkagent by AL DIA" },
       { name: "description", content: "Agente de IA que paga cuentas dentro de las reglas de la empresa y pide permiso cuando algo se sale de ellas." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -150,8 +150,9 @@ function RootComponent() {
         <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-6 py-3">
             <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-              <img src={blinkaLogo} alt="Blinka" width={93} height={30} className="h-7 w-auto" />
-              <span className="flex items-center gap-1.5 border-l border-border pl-2 text-sm font-medium">Agent <img src={aldiaMark} alt="AL DIA" width={16} height={16} className="h-4 w-4 rounded-sm" /><span className="font-mono text-xs font-normal text-muted-foreground">by AL DIA</span></span>
+              <img src={blinkaLogo} alt="Isotipo Blinka" width={20} height={30} className="h-7 w-auto" />
+              <span className="text-lg font-semibold tracking-tight">blinkagent</span>
+              <span className="flex items-center gap-1 border-l border-border pl-2 font-mono text-xs font-normal text-muted-foreground"><img src={aldiaMark} alt="AL DIA" width={14} height={14} className="h-3.5 w-3.5 rounded-sm" />by AL DIA</span>
             </Link>
             <nav className="flex flex-wrap gap-1 text-sm">
               {NAV.map((n) => (

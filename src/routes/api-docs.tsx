@@ -5,9 +5,9 @@ import { Panel, inputCls } from "@/components/ui-bits";
 export const Route = createFileRoute("/api-docs")({
   head: () => ({
     meta: [
-      { title: "API REST para jurados — Blinka Agent by AL DIA" },
+      { title: "API REST para jurados — blinkagent by AL DIA" },
       { name: "description", content: "Envía una factura por curl o Postman y recibe en milisegundos si el agente la paga, la frena o la escala." },
-      { property: "og:title", content: "API REST — Blinka Agent by AL DIA" },
+      { property: "og:title", content: "API REST — blinkagent by AL DIA" },
       { property: "og:description", content: "Prueba el motor de decisiones en vivo: PAGAR, FRENAR o ESCALAR." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
