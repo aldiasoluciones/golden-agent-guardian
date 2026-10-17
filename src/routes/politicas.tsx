@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Panel, inputCls } from "@/components/ui-bits";
 import { fmt, money } from "@/lib/rules";
-import { log, store, uid, useAppState } from "@/lib/store";
+import { log, store, uid, useAppState, useTenantId } from "@/lib/store";
+import { flag, getTenant } from "@/lib/tenants";
 import type { Policies, Vendor } from "@/lib/types";
 
 export const Route = createFileRoute("/politicas")({
@@ -32,6 +33,7 @@ function PoliciesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Políticas y reglas financieras</h1>
+        <TenantBadge />
         <p className="mt-1 text-muted-foreground">El agente solo paga solo si una factura cumple todas estas reglas. Los cambios aplican de inmediato.</p>
       </div>
 
@@ -149,5 +151,14 @@ function PoliciesPage() {
         Reiniciar demo (borra facturas, auditoría y restaura políticas)
       </button>
     </div>
+  );
+}
+
+function TenantBadge() {
+  const t = getTenant(useTenantId());
+  return (
+    <p className="mt-1 font-mono text-xs text-muted-foreground">
+      Empresa activa: {flag(t.country)} {t.name} · {t.industry} · perfil {t.profile} — cada una de las 100 empresas tiene sus propias reglas.
+    </p>
   );
 }
