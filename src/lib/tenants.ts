@@ -33,15 +33,15 @@ export function getTenants(): Tenant[] {
   const list: Tenant[] = [{ id: "t000", name: "AL DIA Demo S.A.S", country: "CO", industry: "Demo del reto", profile: "Balanceado" }];
   for (let i = 1; i < 100; i++) {
     const r = rng(i * 7919);
-    const [suf, industry] = SUFFIX[i % SUFFIX.length];
-    const country = COUNTRIES[Math.floor(r() * COUNTRIES.length)];
-    const profile = (["Conservador", "Balanceado", "Ágil"] as const)[Math.floor(r() * 3)];
-    list.push({ id: `t${String(i).padStart(3, "0")}`, name: `${PREFIX[i % PREFIX.length]} ${suf} ${LEGAL[country]}`, country, industry, profile });
+    const [suf, industry] = SUFFIX[i % SUFFIX.length]!;
+    const country = COUNTRIES[Math.floor(r() * COUNTRIES.length)]!;
+    const profile = (["Conservador", "Balanceado", "Ágil"] as const)[Math.floor(r() * 3)]!;
+    list.push({ id: `t${String(i).padStart(3, "0")}`, name: `${PREFIX[i % PREFIX.length]!} ${suf} ${LEGAL[country]}`, country, industry, profile });
   }
   return (cache = list);
 }
 
-export const getTenant = (id: string) => getTenants().find((t) => t.id === id) ?? getTenants()[0];
+export const getTenant = (id: string) => getTenants().find((t) => t.id === id) ?? getTenants()[0]!;
 
 const round = (n: number, step: number) => Math.round(n / step) * step;
 
