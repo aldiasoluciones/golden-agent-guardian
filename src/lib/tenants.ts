@@ -61,7 +61,7 @@ const digits = (s: string) => s.replace(/\D/g, "");
 const words = (s: string) => slug(s.replace(/\b(s\.?a\.?s|inc|ltda|spa|s\.?a\.?c|s\.?a\.? de c\.?v)\b\.?/gi, ""));
 
 /** Identify which client company an invoice is billed to: tax id → email/domain → company name. */
-export function matchTenant(p: { name?: string; taxId?: string; email?: string }): { tenant: Tenant; how: string } | null {
+export function matchTenant(p: { name?: string | undefined; taxId?: string | undefined; email?: string | undefined }): { tenant: Tenant; how: string } | null {
   const list = getTenants();
   const d = digits(p.taxId ?? "");
   if (d.length >= 6) {
