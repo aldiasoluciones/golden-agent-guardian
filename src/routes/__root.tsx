@@ -91,7 +91,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const NAV: { to: string; key: TKey }[] = [
+const NAV: { to: "/" | "/bandeja" | "/canales" | "/politicas" | "/auditoria"; key: TKey }[] = [
   { to: "/", key: "nav_treasury" },
   { to: "/bandeja", key: "nav_inbox" },
   { to: "/canales", key: "nav_channels" },

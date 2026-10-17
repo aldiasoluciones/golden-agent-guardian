@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Panel, StatusBadge } from "@/components/ui-bits";
 import { runGoldenSet } from "@/lib/agent";
+import { t, useLang, type TKey } from "@/lib/i18n";
 import { fmt, invCOP, money, spentByCategory } from "@/lib/rules";
 import { store, useAppState } from "@/lib/store";
 
@@ -19,14 +20,15 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const STEPS = [
-  { n: "01", t: "Define las reglas", d: "Límites por pago y por mes, beneficiarios permitidos, presupuestos, montos acordados.", to: "/politicas" },
-  { n: "02", t: "Corre el set de facturas", d: "8 casos: normales y las 5 trampas del reto. Un clic cada uno o todos juntos.", to: "/bandeja" },
-  { n: "03", t: "Revisa qué decidió y por qué", d: "Pagó, frenó o escaló. Cada decisión queda explicada en el registro.", to: "/auditoria" },
-] as const;
+const STEPS: { n: string; tk: TKey; dk: TKey; to: "/politicas" | "/bandeja" | "/auditoria" }[] = [
+  { n: "01", tk: "step1_t", dk: "step1_d", to: "/politicas" },
+  { n: "02", tk: "step2_t", dk: "step2_d", to: "/bandeja" },
+  { n: "03", tk: "step3_t", dk: "step3_d", to: "/auditoria" },
+];
 
 function Dashboard() {
   const { invoices, audit, policies } = useAppState();
+  const lang = useLang();
   const [prog, setProg] = useState<{ done: number; total: number; label: string } | null>(null);
   const running = !!prog && prog.done < prog.total;
 
@@ -53,44 +55,42 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <section className="rounded-xl border border-border bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-primary">AL DIA · Reto Blinka</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Agentes que pagan por la empresa</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          El agente de AL DIA lee cada factura y decide: la paga si cumple tus reglas, la frena si es indebida o la escala a una persona cuando algo se sale de ellas. Siempre explica por qué.
-        </p>
+        <p className="font-mono text-xs uppercase tracking-widest text-primary">{t(lang, "hero_kicker")}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{t(lang, "hero_title")}</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{t(lang, "hero_sub")}</p>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {STEPS.map((s) => (
             <Link key={s.n} to={s.to} className="rounded-lg border border-border p-4 hover:border-primary">
               <span className="font-mono text-2xl font-bold text-primary">{s.n}</span>
-              <p className="mt-1 font-semibold">{s.t}</p>
-              <p className="text-xs text-muted-foreground">{s.d}</p>
+              <p className="mt-1 font-semibold">{t(lang, s.tk)}</p>
+              <p className="text-xs text-muted-foreground">{t(lang, s.dk)}</p>
             </Link>
           ))}
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button onClick={runAll} disabled={running} className="rounded-md bg-primary px-5 py-2.5 font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60">
-            {running ? `Procesando ${prog!.done + 1}/${prog!.total}: ${prog!.label}…` : "▶ Correr el set completo del reto"}
+            {running ? `${t(lang, "running")} ${prog!.done + 1}/${prog!.total}: ${prog!.label}…` : t(lang, "run_set")}
           </button>
-          <Link to="/bandeja" className="rounded-md border border-border px-5 py-2.5 font-semibold hover:bg-secondary">Ver al agente razonar en vivo</Link>
+          <Link to="/bandeja" className="rounded-md border border-border px-5 py-2.5 font-semibold hover:bg-secondary">{t(lang, "see_live")}</Link>
           {invoices.length > 0 && !running && (
-            <button onClick={() => confirm("¿Reiniciar el demo?") && store.reset()} className="text-sm text-muted-foreground underline">Reiniciar</button>
+            <button onClick={() => confirm("¿Reiniciar el demo? / Reset the demo?") && store.reset()} className="text-sm text-muted-foreground underline">{t(lang, "reset")}</button>
           )}
         </div>
       </section>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Panel>
-          <p className="text-xs text-muted-foreground">Autonomía</p>
+          <p className="text-xs text-muted-foreground">{t(lang, "autonomy")}</p>
           <p className="mt-2 font-mono text-3xl font-semibold text-primary">{autonomy}%</p>
           <p className="mt-1 text-xs text-muted-foreground">{paid.length + frozen.length} de {decided.length} facturas decididas sin intervención humana</p>
         </Panel>
         <Panel>
-          <p className="text-xs text-muted-foreground">Seguridad</p>
+          <p className="text-xs text-muted-foreground">{t(lang, "security")}</p>
           <p className={`mt-2 font-mono text-3xl font-semibold ${violations ? "text-destructive" : "text-primary"}`}>{violations}</p>
           <p className="mt-1 text-xs text-muted-foreground">pagos fuera de reglas sin aprobación humana{violations ? "" : " · verificado"}</p>
         </Panel>
         <Panel>
-          <p className="text-xs text-muted-foreground">Explicabilidad</p>
+          <p className="text-xs text-muted-foreground">{t(lang, "explainability")}</p>
           <p className="mt-2 font-mono text-3xl font-semibold text-primary">{explained}%</p>
           <p className="mt-1 text-xs text-muted-foreground">de las decisiones tienen su porqué registrado</p>
         </Panel>
