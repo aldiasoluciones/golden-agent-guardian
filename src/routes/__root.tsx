@@ -15,6 +15,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import aldiaMark from "../assets/aldia-mark.png";
+import blinkaLogo from "../assets/blinka-logo.svg";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setLang, t, useLang, type Lang, type TKey } from "../lib/i18n";
 
@@ -69,9 +70,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600&family=Inter:wght@400;450;500;600&display=swap" },
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,
@@ -149,8 +150,8 @@ function RootComponent() {
         <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-6 py-3">
             <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-              <img src={aldiaMark} alt="AL DIA" width={28} height={28} className="h-7 w-7 rounded" />
-              <span>Blinka<span className="text-primary">Agent</span> <span className="font-mono text-xs font-normal text-muted-foreground">by AL DIA</span></span>
+              <img src={blinkaLogo} alt="Blinka" width={93} height={30} className="h-7 w-auto" />
+              <span className="flex items-center gap-1.5 border-l border-border pl-2 text-sm font-medium">Agent <img src={aldiaMark} alt="AL DIA" width={16} height={16} className="h-4 w-4 rounded-sm" /><span className="font-mono text-xs font-normal text-muted-foreground">by AL DIA</span></span>
             </Link>
             <nav className="flex flex-wrap gap-1 text-sm">
               {NAV.map((n) => (
@@ -158,8 +159,8 @@ function RootComponent() {
                   key={n.to}
                   to={n.to}
                   activeOptions={{ exact: true }}
-                  className="rounded px-3 py-1.5 text-muted-foreground hover:text-foreground"
-                  activeProps={{ className: "rounded px-3 py-1.5 bg-secondary text-foreground" }}
+                  className="rounded-full px-3 py-1.5 text-muted-foreground hover:text-foreground"
+                  activeProps={{ className: "rounded-full px-3 py-1.5 bg-primary text-primary-foreground" }}
                 >
                   {t(lang, n.key)}
                 </Link>
