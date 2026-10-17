@@ -6,8 +6,9 @@ import { Receipt } from "@/components/receipt";
 import { SAMPLES, SAMPLE_META, addInvoice, humanDecision, runAgent, type SampleKey } from "@/lib/agent";
 import { extractInvoice } from "@/lib/extract.functions";
 import { money } from "@/lib/rules";
-import { useAppState } from "@/lib/store";
-import type { Check } from "@/lib/types";
+import { currentTenant, setTenant, useAppState } from "@/lib/store";
+import { getTenant, matchTenant } from "@/lib/tenants";
+import type { Check, Invoice } from "@/lib/types";
 import WOW_NAMES from "@/lib/wow-names.json";
 
 export const Route = createFileRoute("/bandeja")({
@@ -53,7 +54,7 @@ function Inbox() {
 
   const [batch, setBatch] = useState<{ total: number; done: number; pagada: number; frenada: number; escalada: number; errors: string[] } | null>(null);
 
-  const ingest = async (f: File): Promise<string> => {
+  const read = async (f: File): Promise<() => string> => {
     if (f.size > 4_500_000) throw new Error(`${f.name}: supera 4.5 MB`);
     const isText = /\.(txt|csv|json|xml|md|eml)$/i.test(f.name) || f.type.startsWith("text/");
     const payload = isText
@@ -70,13 +71,16 @@ function Inbox() {
       : hasPayer
         ? { status: "desconocido", name: String(x.clientName || x.clientTaxId || x.clientEmail), how: "sin coincidencia" }
         : { status: "sin-dato", name: getTenant(currentTenant()).name, how: "la factura no indica pagador; se usó la empresa activa" };
+    return () => {
     if (m) setTenant(m.tenant.id);
     return addInvoice({
       number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
       bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
       category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`, payer,
     }).id;
+    };
   };
+  const ingest = async (f: File) => (await read(f))();
 
   const onFile = async (f: File) => {
     setUpErr("");
@@ -106,9 +110,10 @@ function Inbox() {
       while (next < list.length) {
         const i = next++;
         try {
-          ids[i] = await ingest(list[i]!);
-          const id = ids[i]!;
+          const commit = await read(list[i]!);
           chain = chain.then(async () => {
+            const id = commit();
+            ids[i] = id;
             await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
           });
           await chain;
