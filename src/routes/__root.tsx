@@ -1,3 +1,5 @@
+import { getTenants, flag } from "@/lib/tenants";
+import { setTenant, useTenantId } from "@/lib/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -116,6 +118,25 @@ function LangSwitch() {
   );
 }
 
+function TenantSwitch() {
+  const id = useTenantId();
+  const tenants = getTenants();
+  return (
+    <select
+      aria-label="Empresa cliente"
+      value={id}
+      onChange={(e) => setTenant(e.target.value)}
+      className="max-w-[220px] rounded-md border border-border bg-background px-2 py-1 text-xs"
+    >
+      {tenants.map((t) => (
+        <option key={t.id} value={t.id}>
+          {flag(t.country)} {t.name} · {t.profile}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const lang = useLang();
@@ -142,6 +163,7 @@ function RootComponent() {
               ))}
             </nav>
             <span className="ml-auto hidden font-mono text-xs text-muted-foreground md:inline">{t(lang, "tagline")}</span>
+            <TenantSwitch />
             <LangSwitch />
           </div>
         </header>
