@@ -11,7 +11,7 @@ const Input = z.object({
 const schema = {
   type: "object",
   additionalProperties: false,
-  required: ["number", "vendorName", "nit", "bankAccount", "amount", "currency", "category", "dueDate", "description"],
+  required: ["number", "vendorName", "nit", "bankAccount", "amount", "currency", "category", "dueDate", "description", "clientName", "clientTaxId", "clientEmail"],
   properties: {
     number: { type: "string" },
     vendorName: { type: "string" },
@@ -22,6 +22,9 @@ const schema = {
     category: { type: "string", enum: ["Suministros", "Tecnología", "Logística", "Servicios", "Otro"] },
     dueDate: { type: "string", description: "YYYY-MM-DD" },
     description: { type: "string" },
+    clientName: { type: "string", description: "Empresa a la que se factura (Facturado a / Bill to / Cliente / Adquirente / Destinataire / Rechnungsempfänger)" },
+    clientTaxId: { type: "string", description: "NIT/EIN/CNPJ/RFC/RUT/RUC de la empresa a la que se factura, no del emisor" },
+    clientEmail: { type: "string", description: "Correo de la empresa pagadora o buzón donde se recibió" },
   },
 };
 

@@ -61,11 +61,20 @@ function Inbox() {
       : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
     const res = await extract({ data: payload });
     if (!res.ok) throw new Error(`${f.name}: ${res.error}`);
-    const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string };
+    const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string; clientName?: string; clientTaxId?: string; clientEmail?: string };
+    // El agente identifica a qué empresa pagadora va dirigida y la enruta a su bóveda y políticas.
+    const hasPayer = !!(x.clientName || x.clientTaxId || x.clientEmail);
+    const m = hasPayer ? matchTenant({ name: x.clientName, taxId: x.clientTaxId, email: x.clientEmail }) : null;
+    const payer: Invoice["payer"] = m
+      ? { status: "detectado", name: m.tenant.name, how: m.how }
+      : hasPayer
+        ? { status: "desconocido", name: String(x.clientName || x.clientTaxId || x.clientEmail), how: "sin coincidencia" }
+        : { status: "sin-dato", name: getTenant(currentTenant()).name, how: "la factura no indica pagador; se usó la empresa activa" };
+    if (m) setTenant(m.tenant.id);
     return addInvoice({
       number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
       bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
-      category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`,
+      category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`, payer,
     }).id;
   };
 

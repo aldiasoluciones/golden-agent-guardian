@@ -2,7 +2,7 @@ import type { Check, Currency, Invoice, Policies } from "./types";
 
 export const PAID: Invoice["status"][] = ["pagada", "aprobada"];
 /** Checks whose failure freezes the invoice (never paid by the agent); any other failure escalates to a person. */
-export const FREEZE_CHECKS = ["whitelist", "duplicate"];
+export const FREEZE_CHECKS = ["whitelist", "duplicate", "payer"];
 
 export const fmt = (n: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
@@ -58,6 +58,19 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
   const cop = invCOP(inv, p);
   const shown = money(inv.amount, inv.currency) + (inv.currency === "USD" ? ` (≈ ${fmt(cop)})` : "");
   const checks: Check[] = [];
+
+  if (inv.payer) {
+    const ok = inv.payer.status !== "desconocido";
+    checks.push({
+      id: "payer",
+      label: "Factura dirigida a esta empresa pagadora",
+      passed: ok,
+      detail: ok
+        ? `Facturada a ${inv.payer.name} (${inv.payer.how}).`
+        : `Viene facturada a «${inv.payer.name}», que no es cliente registrado. Nunca se paga una factura de otra empresa.`,
+    });
+  }
+
 
   checks.push({
     id: "whitelist",
