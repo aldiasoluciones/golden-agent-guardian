@@ -171,7 +171,7 @@ function RootComponent() {
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-6 py-8">
-          <FraudAlert key={useTenantKeyPlaceholder} />
+          <FraudAlert />
           <Outlet />
         </main>
         <footer className="border-t border-border py-6 text-center font-mono text-xs text-muted-foreground">
