@@ -149,7 +149,8 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
     } else {
       // Invoice in another currency: the conversion must use the configured rate within tolerance.
       const converted = invCur === "COP" ? inv.amount / p.usdRate : inv.amount * p.usdRate;
-      const ref = vendor.agreedAmount ?? vendor.avgAmount;
+      const refVendor = vendor.agreedAmount ?? vendor.avgAmount;
+      const ref = vendor.currency === payout ? refVendor : payout === "COP" ? refVendor * p.usdRate : refVendor / p.usdRate;
       const diff = ref > 0 ? Math.abs(converted - ref) / ref : 1;
       const ok = diff <= p.fxTolerance / 100;
       checks.push({
