@@ -60,7 +60,7 @@ export type Invoice = {
   sender?: string;
   priority?: "alta" | "normal";
   queue?: "activa" | "lote";
-  batchId?: string;
+  batchId?: string | undefined;
   latencyMs?: number;
 };
 
