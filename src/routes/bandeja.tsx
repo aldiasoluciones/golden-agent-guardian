@@ -82,7 +82,7 @@ function Inbox() {
 
   const onFiles = async (list: File[]) => {
     if (list.length === 0) return;
-    if (list.length === 1) return onFile(list[0]);
+    if (list.length === 1) return onFile(list[0]!);
     setUpErr("");
     setUploading(true);
     setBusy(true);
@@ -96,7 +96,7 @@ function Inbox() {
       while (next < list.length) {
         const i = next++;
         try {
-          ids[i] = await ingest(list[i]);
+          ids[i] = await ingest(list[i]!);
           const id = ids[i]!;
           chain = chain.then(async () => {
             await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
