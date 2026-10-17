@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { policiesFor } from "./tenants";
 import type { AppState, AuditEvent, Invoice, Policies } from "./types";
 
 export const DEFAULT_POLICIES: Policies = {
@@ -24,22 +25,37 @@ export const DEFAULT_POLICIES: Policies = {
   ],
 };
 
-const KEY = "aldia-blinka-agent-v4";
-const initial = (): AppState => ({ policies: DEFAULT_POLICIES, invoices: [], audit: [] });
+const BASE = "aldia-blinka-agent-v4";
+const TENANT_KEY = "aldia-tenant";
+let tenantId = "t000";
+const keyFor = (id: string) => (id === "t000" ? BASE : `${BASE}:${id}`);
+const initial = (id = tenantId): AppState => ({ policies: policiesFor(id, DEFAULT_POLICIES), invoices: [], audit: [] });
 let state: AppState = initial();
 let loaded = false;
 let saveT: ReturnType<typeof setTimeout> | undefined;
 const subs = new Set<() => void>();
+const tenantSubs = new Set<() => void>();
+
+function readTenant(id: string) {
+  try {
+    const raw = localStorage.getItem(keyFor(id));
+    state = raw ? { ...initial(id), ...JSON.parse(raw) } : initial(id);
+  } catch {
+    state = initial(id);
+  }
+}
 
 function load() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) state = { ...initial(), ...JSON.parse(raw) };
-  } catch {
-    /* ignore */
-  }
+  tenantId = localStorage.getItem(TENANT_KEY) || "t000";
+  readTenant(tenantId);
+}
+
+function flush() {
+  if (saveT) clearTimeout(saveT);
+  saveT = undefined;
+  localStorage.setItem(keyFor(tenantId), JSON.stringify(state));
 }
 
 export const store = {
@@ -48,13 +64,13 @@ export const store = {
     load();
     state = fn(state);
     // Persist at most a few times per second so 300/min bursts stay fast.
-    if (!saveT) saveT = setTimeout(() => { saveT = undefined; localStorage.setItem(KEY, JSON.stringify(state)); }, 250);
+    if (!saveT) saveT = setTimeout(flush, 250);
     subs.forEach((f) => f());
   },
   subscribe(f: () => void) {
     subs.add(f);
     const onStorage = (e: StorageEvent) => {
-      if (e.key === KEY && e.newValue) {
+      if (e.key === keyFor(tenantId) && e.newValue) {
         state = JSON.parse(e.newValue);
         f();
       }
@@ -69,6 +85,25 @@ export const store = {
     store.set(() => initial());
   },
 };
+
+/** Switch the active client company: each one keeps its own policies, invoices and audit log. */
+export function setTenant(id: string) {
+  load();
+  if (id === tenantId) return;
+  flush();
+  tenantId = id;
+  localStorage.setItem(TENANT_KEY, id);
+  readTenant(id);
+  subs.forEach((f) => f());
+  tenantSubs.forEach((f) => f());
+}
+export function useTenantId() {
+  return useSyncExternalStore(
+    (f) => (tenantSubs.add(f), () => tenantSubs.delete(f)),
+    () => (load(), tenantId),
+    () => "t000",
+  );
+}
 
 const serverSnap = initial();
 export function useAppState() {
