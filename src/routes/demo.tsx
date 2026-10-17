@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Burst, Correo, WhatsApp } from "./canales";
 import { DemoUpload } from "@/components/demo-upload";
+import { ShellAttack } from "@/components/shell-attack";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({ meta: [
@@ -22,6 +23,7 @@ function Demo() {
     <div className="grid gap-6 lg:grid-cols-2"><Correo /><WhatsApp /></div>
     <DemoUpload />
     <Burst />
+    <ShellAttack />
     <p className="text-center text-xs text-muted-foreground"><Link to="/api-docs" className="text-primary underline">Ver API REST</Link></p>
   </div>;
 }
