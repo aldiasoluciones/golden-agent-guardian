@@ -93,12 +93,13 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const NAV: { to: "/" | "/bandeja" | "/canales" | "/politicas" | "/auditoria"; key: TKey }[] = [
+const NAV: { to: "/" | "/bandeja" | "/canales" | "/politicas" | "/auditoria" | "/api-docs"; key: TKey }[] = [
   { to: "/", key: "nav_treasury" },
   { to: "/bandeja", key: "nav_inbox" },
   { to: "/canales", key: "nav_channels" },
   { to: "/politicas", key: "nav_policies" },
   { to: "/auditoria", key: "nav_audit" },
+  { to: "/api-docs", key: "nav_api" },
 ];
 
 function LangSwitch() {
