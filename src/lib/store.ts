@@ -6,6 +6,7 @@ export const DEFAULT_POLICIES: Policies = {
   periodLimit: 40_000_000,
   usdRate: 4_000,
   agreedTolerance: 5,
+  fxTolerance: 2,
   anomalyMultiplier: 2,
   requireBankMatch: true,
   blockDuplicates: true,

@@ -135,6 +135,34 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
     }
   }
 
+  if (vendor) {
+    // Payout currency preference: the vendor chooses to be paid in their own currency or the payer's.
+    const payout = vendor.payoutCurrency ?? vendor.currency;
+    const invCur = inv.currency ?? "COP";
+    if (invCur === payout) {
+      checks.push({
+        id: "fx",
+        label: `Moneda de pago según preferencia (${payout})`,
+        passed: true,
+        detail: `El proveedor prefiere cobrar en ${payout} y la factura viene en ${invCur}: no hay conversión.`,
+      });
+    } else {
+      // Invoice in another currency: the conversion must use the configured rate within tolerance.
+      const converted = invCur === "COP" ? inv.amount / p.usdRate : inv.amount * p.usdRate;
+      const ref = vendor.agreedAmount ?? vendor.avgAmount;
+      const diff = ref > 0 ? Math.abs(converted - ref) / ref : 1;
+      const ok = diff <= p.fxTolerance / 100;
+      checks.push({
+        id: "fx",
+        label: `Conversión a ${payout} con tasa oficial`,
+        passed: ok,
+        detail: ok
+          ? `El proveedor cobra en ${payout}; ${money(inv.amount, invCur)} ≈ ${money(converted, payout)} a TRM ${fmt(p.usdRate)} (desvío ${(diff * 100).toFixed(1)}% ≤ ${p.fxTolerance}%).`
+          : `El proveedor cobra en ${payout}; ${money(inv.amount, invCur)} ≈ ${money(converted, payout)} a TRM ${fmt(p.usdRate)}, pero lo acordado es ${money(ref, payout)}: desvío ${(diff * 100).toFixed(1)}% (tolerancia ${p.fxTolerance}%). Posible tasa alterada.`,
+      });
+    }
+  }
+
   if (vendor?.agreedAmount) {
     const agreed = vendor.agreedAmount;
     const diff = Math.abs(inv.amount - agreed) / agreed;
