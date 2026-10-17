@@ -15,6 +15,7 @@ import { Route as BandejaRouteImport } from './routes/bandeja'
 import { Route as CanalesRouteImport } from './routes/canales'
 import { Route as PoliticasRouteImport } from './routes/politicas'
 import { Route as ApiAuditRouteImport } from './routes/api/audit'
+import { Route as ApiPublicV1DecideRouteImport } from './routes/api/public/v1/decide'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const ApiAuditRoute = ApiAuditRouteImport.update({
   path: '/api/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1DecideRoute = ApiPublicV1DecideRouteImport.update({
+  id: '/api/public/v1/decide',
+  path: '/api/public/v1/decide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/canales': typeof CanalesRoute
   '/politicas': typeof PoliticasRoute
   '/api/audit': typeof ApiAuditRoute
+  '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/canales': typeof CanalesRoute
   '/politicas': typeof PoliticasRoute
   '/api/audit': typeof ApiAuditRoute
+  '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,13 +79,27 @@ export interface FileRoutesById {
   '/canales': typeof CanalesRoute
   '/politicas': typeof PoliticasRoute
   '/api/audit': typeof ApiAuditRoute
+  '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auditoria' | '/bandeja' | '/canales' | '/politicas' | '/api/audit'
+    | '/'
+    | '/auditoria'
+    | '/bandeja'
+    | '/canales'
+    | '/politicas'
+    | '/api/audit'
+    | '/api/public/v1/decide'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auditoria' | '/bandeja' | '/canales' | '/politicas' | '/api/audit'
+  to:
+    | '/'
+    | '/auditoria'
+    | '/bandeja'
+    | '/canales'
+    | '/politicas'
+    | '/api/audit'
+    | '/api/public/v1/decide'
   id:
     | '__root__'
     | '/'
@@ -86,6 +108,7 @@ export interface FileRouteTypes {
     | '/canales'
     | '/politicas'
     | '/api/audit'
+    | '/api/public/v1/decide'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,6 +118,7 @@ export interface RootRouteChildren {
   CanalesRoute: typeof CanalesRoute
   PoliticasRoute: typeof PoliticasRoute
   ApiAuditRoute: typeof ApiAuditRoute
+  ApiPublicV1DecideRoute: typeof ApiPublicV1DecideRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -141,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/decide': {
+      id: '/api/public/v1/decide'
+      path: '/api/public/v1/decide'
+      fullPath: '/api/public/v1/decide'
+      preLoaderRoute: typeof ApiPublicV1DecideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -151,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   CanalesRoute: CanalesRoute,
   PoliticasRoute: PoliticasRoute,
   ApiAuditRoute: ApiAuditRoute,
+  ApiPublicV1DecideRoute: ApiPublicV1DecideRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
