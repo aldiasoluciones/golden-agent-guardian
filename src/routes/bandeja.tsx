@@ -99,7 +99,7 @@ function Inbox() {
           ids[i] = await ingest(list[i]);
           const id = ids[i]!;
           chain = chain.then(async () => {
-            await runAgent(id, { onCheck: () => {}, onText: () => {} });
+            await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
           });
           await chain;
         } catch (e) {
@@ -128,7 +128,7 @@ function Inbox() {
     const s = { pagada: 0, frenada: 0, escalada: 0 };
     for (const i of recent) {
       const st = String((i as { status?: string }).status ?? "");
-      if (/pag/.test(st)) s.pagada++; else if (/fren|rechaz/.test(st)) s.frenada++; else if (/escal|pend|revis/.test(st)) s.escalada++;
+      if (/pag/.test(st)) s.pagada++; else if (/fren|rechaz/.test(st)) s.frenada++; else if (/escal|revis|lote/.test(st)) s.escalada++;
     }
     return s;
   })();
