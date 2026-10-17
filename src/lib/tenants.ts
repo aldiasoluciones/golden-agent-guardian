@@ -43,6 +43,45 @@ export function getTenants(): Tenant[] {
 
 export const getTenant = (id: string) => getTenants().find((t) => t.id === id) ?? getTenants()[0]!;
 
+/** Deterministic fiscal identity per company (fictitious). */
+export function tenantTaxId(t: Tenant): string {
+  const n = 900_000_000 + Number(t.id.slice(1)) * 7_331;
+  switch (t.country) {
+    case "US": return `EIN ${String(n).slice(0, 2)}-${String(n).slice(2, 9)}`;
+    case "BR": return `CNPJ ${String(n).slice(0, 8)}/0001-${String(n).slice(-2)}`;
+    case "MX": return `RFC ${t.name.replace(/[^A-Z]/gi, "").slice(0, 3).toUpperCase()}${String(n).slice(-6)}A1B`;
+    case "CL": return `RUT ${String(n).slice(1, 9)}-K`;
+    case "PE": return `RUC 20${String(n).slice(0, 9)}`;
+    default: return `NIT ${n}-${n % 10}`;
+  }
+}
+const slug = (s: string) => s.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "");
+export const tenantEmail = (t: Tenant) => `facturas.${t.id}@${slug(t.name.split(" ").slice(0, 2).join(""))}.co`;
+const digits = (s: string) => s.replace(/\D/g, "");
+const words = (s: string) => slug(s.replace(/\b(s\.?a\.?s|inc|ltda|spa|s\.?a\.?c|s\.?a\.? de c\.?v)\b\.?/gi, ""));
+
+/** Identify which client company an invoice is billed to: tax id → email/domain → company name. */
+export function matchTenant(p: { name?: string | undefined; taxId?: string | undefined; email?: string | undefined }): { tenant: Tenant; how: string } | null {
+  const list = getTenants();
+  const d = digits(p.taxId ?? "");
+  if (d.length >= 6) {
+    const t = list.find((x) => digits(tenantTaxId(x)) === d);
+    if (t) return { tenant: t, how: "por identificación fiscal" };
+  }
+  const e = (p.email ?? "").toLowerCase().trim();
+  if (e) {
+    const dom = e.split("@")[1];
+    const t = list.find((x) => tenantEmail(x) === e) ?? (dom ? list.filter((x) => tenantEmail(x).endsWith("@" + dom)) : []).find((_, __, a) => a.length === 1);
+    if (t) return { tenant: t, how: "por correo de recepción" };
+  }
+  const n = words(p.name ?? "");
+  if (n.length >= 4) {
+    const t = list.find((x) => words(x.name) === n) ?? (/aldia/.test(n) ? list[0] : undefined);
+    if (t) return { tenant: t, how: "por razón social" };
+  }
+  return null;
+}
+
 const round = (n: number, step: number) => Math.round(n / step) * step;
 
 /** Each company gets its own policies derived deterministically from its id and risk profile. */

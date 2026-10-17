@@ -80,6 +80,8 @@ export type Invoice = {
   queue?: "activa" | "lote";
   batchId?: string | undefined;
   latencyMs?: number;
+  /** Paying company detected from the invoice's "billed to" block. */
+  payer?: { status: "detectado" | "desconocido" | "sin-dato"; name: string; how: string };
 };
 
 export type Channel = "whatsapp" | "correo" | "manual";

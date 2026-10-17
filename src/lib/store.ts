@@ -97,6 +97,7 @@ export function setTenant(id: string) {
   subs.forEach((f) => f());
   tenantSubs.forEach((f) => f());
 }
+export const currentTenant = () => (load(), tenantId);
 export function useTenantId() {
   return useSyncExternalStore(
     (f) => (tenantSubs.add(f), () => tenantSubs.delete(f)),

@@ -6,8 +6,9 @@ import { Receipt } from "@/components/receipt";
 import { SAMPLES, SAMPLE_META, addInvoice, humanDecision, runAgent, type SampleKey } from "@/lib/agent";
 import { extractInvoice } from "@/lib/extract.functions";
 import { money } from "@/lib/rules";
-import { useAppState } from "@/lib/store";
-import type { Check } from "@/lib/types";
+import { currentTenant, setTenant, useAppState } from "@/lib/store";
+import { getTenant, matchTenant } from "@/lib/tenants";
+import type { Check, Invoice } from "@/lib/types";
 import WOW_NAMES from "@/lib/wow-names.json";
 
 export const Route = createFileRoute("/bandeja")({
@@ -53,7 +54,7 @@ function Inbox() {
 
   const [batch, setBatch] = useState<{ total: number; done: number; pagada: number; frenada: number; escalada: number; errors: string[] } | null>(null);
 
-  const ingest = async (f: File): Promise<string> => {
+  const read = async (f: File): Promise<() => string> => {
     if (f.size > 4_500_000) throw new Error(`${f.name}: supera 4.5 MB`);
     const isText = /\.(txt|csv|json|xml|md|eml)$/i.test(f.name) || f.type.startsWith("text/");
     const payload = isText
@@ -61,13 +62,25 @@ function Inbox() {
       : { fileName: f.name, mime: f.type, dataUrl: await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); }) };
     const res = await extract({ data: payload });
     if (!res.ok) throw new Error(`${f.name}: ${res.error}`);
-    const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string };
+    const x = res.invoice as { number?: string; vendorName?: string; nit?: string; bankAccount?: string; amount?: number; currency?: string; category?: string; dueDate?: string; description?: string; clientName?: string; clientTaxId?: string; clientEmail?: string };
+    // El agente identifica a qué empresa pagadora va dirigida y la enruta a su bóveda y políticas.
+    const hasPayer = !!(x.clientName || x.clientTaxId || x.clientEmail);
+    const m = hasPayer ? matchTenant({ name: x.clientName, taxId: x.clientTaxId, email: x.clientEmail }) : null;
+    const payer: Invoice["payer"] = m
+      ? { status: "detectado", name: m.tenant.name, how: m.how }
+      : hasPayer
+        ? { status: "desconocido", name: String(x.clientName || x.clientTaxId || x.clientEmail), how: "sin coincidencia" }
+        : { status: "sin-dato", name: getTenant(currentTenant()).name, how: "la factura no indica pagador; se usó la empresa activa" };
+    return () => {
+    if (m) setTenant(m.tenant.id);
     return addInvoice({
       number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
       bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
-      category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`,
+      category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`, payer,
     }).id;
+    };
   };
+  const ingest = async (f: File) => (await read(f))();
 
   const onFile = async (f: File) => {
     setUpErr("");
@@ -97,9 +110,10 @@ function Inbox() {
       while (next < list.length) {
         const i = next++;
         try {
-          ids[i] = await ingest(list[i]!);
-          const id = ids[i]!;
+          const commit = await read(list[i]!);
           chain = chain.then(async () => {
+            const id = commit();
+            ids[i] = id;
             await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
           });
           await chain;
@@ -234,6 +248,11 @@ function Inbox() {
                   <p className="font-mono text-xs text-muted-foreground">{cur.nit} · {cur.number} · vence {cur.dueDate} · {cur.category}</p>
                   <p className="mt-2 text-sm">{cur.description}</p>
                   <p className="mt-1 font-mono text-xs text-muted-foreground">Pagar a: {cur.bankAccount}</p>
+                  {cur.payer && (
+                    <p className={`mt-2 inline-block rounded border px-2 py-1 text-xs ${cur.payer.status === "desconocido" ? "border-destructive text-destructive" : "border-primary/50 text-primary"}`}>
+                      🏢 Pagador: {cur.payer.name} · {cur.payer.status === "detectado" ? `auto-detectado ${cur.payer.how}` : cur.payer.how}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-2xl font-semibold">{money(cur.amount, cur.currency)}</p>
