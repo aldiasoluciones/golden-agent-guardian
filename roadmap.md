@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Añadir cinco sellos de confianza con respaldo técnico accesible y alcance verificable
+- [ ] Verificar los desplegables en escritorio y móvil y ejecutar las pruebas existentes
 - [x] Reiniciar el lote jurados sin alterar otras facturas y verificar dos corridas
 - [x] Solicitar publicación de los cambios verificados
 - [x] Adjuntar archivos en Correo y adjuntar/pegar/soltar en WhatsApp
