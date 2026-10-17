@@ -24,7 +24,7 @@ export type Vendor = {
   legalDoc?: LegalDoc;
   payMethod?: PayMethod;
   /** Currency the vendor prefers to be paid in (defaults to the vendor's currency). */
-  payoutCurrency?: Currency;
+  payoutCurrency?: Currency | undefined;
 };
 
 export type Policies = {
