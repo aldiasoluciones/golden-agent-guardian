@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decide, evaluateInvoice } from "./rules";
+import { decide, evaluateInvoice, routeEscalation } from "./rules";
 import { DEFAULT_POLICIES } from "./store";
 import type { Invoice } from "./types";
 
@@ -37,5 +37,20 @@ describe("reglas de pago", () => {
   it("cambio de cuenta bancaria escala", () => expect(decide(run({ ...base, bankAccount: "Nequi 300" }))).toBe("escalar"));
   it("el agente nunca paga si alguna regla falla", () => {
     for (const i of [{ ...base, nit: "1" }, { ...base, amount: 9e9 }, { ...base, bankAccount: "x" }]) expect(decide(run(i))).not.toBe("pagar");
+  });
+});
+
+describe("escalamiento por carga del equipo", () => {
+  const limit = { autoPayLimit: 5_000_000 };
+  const minor = [{ id: "budget", label: "", passed: false, detail: "" }];
+  it("con cola llena, una escalada menor va a lote", () => {
+    expect(routeEscalation(minor, 1_000_000, limit, 10).queue).toBe("lote");
+  });
+  it("con espacio en cola, va a revisión", () => {
+    expect(routeEscalation(minor, 1_000_000, limit, 3).queue).toBe("activa");
+  });
+  it("un cambio de cuenta siempre va a revisión con prioridad alta", () => {
+    const r = routeEscalation([{ id: "bank", label: "", passed: false, detail: "" }], 1_000_000, limit, 50);
+    expect(r).toEqual({ priority: "alta", queue: "activa" });
   });
 });

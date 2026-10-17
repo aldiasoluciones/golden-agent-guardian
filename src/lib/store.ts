@@ -23,6 +23,7 @@ const KEY = "aldia-blinka-agent-v2";
 const initial = (): AppState => ({ policies: DEFAULT_POLICIES, invoices: [], audit: [] });
 let state: AppState = initial();
 let loaded = false;
+let saveT: ReturnType<typeof setTimeout> | undefined;
 const subs = new Set<() => void>();
 
 function load() {
@@ -41,7 +42,8 @@ export const store = {
   set(fn: (s: AppState) => AppState) {
     load();
     state = fn(state);
-    localStorage.setItem(KEY, JSON.stringify(state));
+    // Persist at most a few times per second so 300/min bursts stay fast.
+    if (!saveT) saveT = setTimeout(() => { saveT = undefined; localStorage.setItem(KEY, JSON.stringify(state)); }, 250);
     subs.forEach((f) => f());
   },
   subscribe(f: () => void) {

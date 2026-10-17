@@ -1,4 +1,4 @@
-import { decide, evaluateInvoice, explain, invCOP, money } from "./rules";
+import { decide, evaluateInvoice, explain, invCOP, money, routeEscalation } from "./rules";
 import { log, store, uid, updateInvoice } from "./store";
 import type { Check, Invoice, Receipt } from "./types";
 
@@ -101,8 +101,12 @@ export async function runAgent(id: string, l: AgentListener, opts: { ai?: boolea
     updateInvoice(id, { status: "frenada", aiReasoning: text, decisionReason });
     log({ type: "frenada", message: `${inv.number} · ${decisionReason}`, invoiceId: id, amount: amt });
   } else {
-    updateInvoice(id, { status: "retenida", aiReasoning: text, decisionReason });
-    log({ type: "retenida", message: `${inv.number} · ${decisionReason}`, invoiceId: id, amount: amt });
+    const activeOpen = store.get().invoices.filter((i) => i.status === "retenida" && i.queue !== "lote").length;
+    const r = routeEscalation(checks, amt, s.policies, activeOpen);
+    const batchId = r.queue === "lote" ? `LOTE-${inv.nit.replace(/[^0-9a-z]/gi, "").slice(0, 10)}` : undefined;
+    const note = r.queue === "lote" ? ` Agrupada en ${batchId} para no sobrecargar al equipo (cola llena).` : r.priority === "alta" ? " Prioridad ALTA: va directo a revisión." : "";
+    updateInvoice(id, { status: "retenida", aiReasoning: text, decisionReason: decisionReason + note, ...r, batchId });
+    log({ type: "retenida", message: `${inv.number} · ${decisionReason}${note}`, invoiceId: id, amount: amt });
   }
 }
 
