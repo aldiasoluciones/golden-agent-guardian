@@ -35,6 +35,48 @@ let loaded = false;
 let saveT: ReturnType<typeof setTimeout> | undefined;
 const subs = new Set<() => void>();
 const tenantSubs = new Set<() => void>();
+export const JURY_SOURCE = "Lote jurados: ";
+let jurySession: Map<string, { original: AppState; result: AppState }> | undefined;
+
+function enterJuryTenant(id: string) {
+  const saved = jurySession?.get(id);
+  if (saved) { state = saved.result; return; }
+  readTenant(id);
+  const original = state;
+  state = initial(id);
+  jurySession?.set(id, { original, result: state });
+}
+
+/** Evaluate against a clean fixture, then replace only this suite's tagged records. */
+export async function runJurySession(run: () => Promise<void>) {
+  load();
+  if (jurySession) throw new Error("El lote jurados ya está en ejecución.");
+  flush();
+  const startingTenant = tenantId;
+  const session = new Map<string, { original: AppState; result: AppState }>();
+  jurySession = session;
+  enterJuryTenant(tenantId);
+  try { await run(); }
+  finally {
+    const active = session.get(tenantId);
+    if (active) active.result = state;
+    jurySession = undefined;
+    for (const [id, { original, result }] of session) {
+      const removed = new Set(original.invoices.filter((i) => i.source.startsWith(JURY_SOURCE)).map((i) => i.id));
+      const merged: AppState = {
+        policies: original.policies,
+        invoices: [...result.invoices, ...original.invoices.filter((i) => !removed.has(i.id))],
+        audit: [...result.audit, ...original.audit.filter((e) => !e.invoiceId || !removed.has(e.invoiceId))],
+      };
+      localStorage.setItem(keyFor(id), JSON.stringify(merged));
+    }
+    tenantId = startingTenant;
+    localStorage.setItem(TENANT_KEY, tenantId);
+    readTenant(tenantId);
+    subs.forEach((f) => f());
+    tenantSubs.forEach((f) => f());
+  }
+}
 
 function readTenant(id: string) {
   try {
@@ -55,6 +97,7 @@ function load() {
 function flush() {
   if (saveT) clearTimeout(saveT);
   saveT = undefined;
+  if (jurySession) return;
   localStorage.setItem(keyFor(tenantId), JSON.stringify(state));
 }
 
@@ -64,7 +107,7 @@ export const store = {
     load();
     state = fn(state);
     // Persist at most a few times per second so 300/min bursts stay fast.
-    if (!saveT) saveT = setTimeout(flush, 250);
+    if (!jurySession && !saveT) saveT = setTimeout(flush, 250);
     subs.forEach((f) => f());
   },
   subscribe(f: () => void) {
@@ -90,10 +133,12 @@ export const store = {
 export function setTenant(id: string) {
   load();
   if (id === tenantId) return;
+  const active = jurySession?.get(tenantId);
+  if (active) active.result = state;
   flush();
   tenantId = id;
-  localStorage.setItem(TENANT_KEY, id);
-  readTenant(id);
+  if (jurySession) enterJuryTenant(id);
+  else { localStorage.setItem(TENANT_KEY, id); readTenant(id); }
   subs.forEach((f) => f());
   tenantSubs.forEach((f) => f());
 }

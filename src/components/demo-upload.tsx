@@ -2,9 +2,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Panel } from "@/components/ui-bits";
+import { Button } from "@/components/ui/button";
 import { SAMPLES, addInvoice, runAgent, type SampleKey } from "@/lib/agent";
 import { extractInvoice } from "@/lib/extract.functions";
-import { setTenant, store, useAppState } from "@/lib/store";
+import { JURY_SOURCE, runJurySession, setTenant, store, updateInvoice, useAppState } from "@/lib/store";
 import { matchTenant } from "@/lib/tenants";
 import type { Invoice } from "@/lib/types";
 import WOW_NAMES from "@/lib/wow-names.json";
@@ -76,7 +77,9 @@ export function DemoUpload() {
       while (next < list.length) {
         const i = next++;
         try {
-          const commit = await read(list[i]!);
+          const file = list[i];
+          if (!file) continue;
+          const commit = await read(file);
           chain = chain.then(async () => { await runAgent(commit(), { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 }); });
           await chain;
         } catch (e) {
@@ -96,11 +99,17 @@ export function DemoUpload() {
     setErr(""); setBusy(true); setBatch(null);
     const rows: Row[] = [];
     setJury([]);
+    try { await runJurySession(async () => {
+    setTenant("t000");
     for (const c of JURY_CASES) {
       try {
         let id: string;
         if (c.file) id = (await read(await fetchPdf(`/downloads/${c.file}`, c.file)))();
-        else { setTenant("t000"); id = addInvoice(SAMPLES[c.preset!]()).id; }
+        else {
+          if (!c.preset) throw new Error("Caso sin archivo ni datos de prueba.");
+          setTenant("t000"); id = addInvoice(SAMPLES[c.preset]()).id;
+        }
+        updateInvoice(id, { source: JURY_SOURCE + c.label });
         await runAgent(id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 0 });
         const inv = store.get().invoices.find((i) => i.id === id);
         rows.push({ label: c.label, expect: c.expect, got: outcome(inv?.status ?? ""), company: inv?.payer?.name ?? "AL DIA Demo S.A.S.", reason: inv?.decisionReason ?? "" });
@@ -109,7 +118,8 @@ export function DemoUpload() {
       }
       setJury([...rows]);
     }
-    setBusy(false);
+    }); } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); }
   };
 
   const ok = jury?.filter((r) => r.got === r.expect).length ?? 0;
@@ -140,7 +150,7 @@ export function DemoUpload() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Lote jurados · un caso típico por factura">
           <p className="text-sm text-muted-foreground">{JURY_CASES.length} casos con resultado esperado. Al terminar se compara lo esperado con lo que decidió el motor.</p>
-          <button disabled={busy} onClick={runJury} className="mt-3 w-full rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">Correr lote jurados</button>
+          <Button disabled={busy} onClick={runJury} className="mt-3 w-full">Correr lote jurados</Button>
           {jury && (
             <div className="mt-3">
               <p className="mb-2 font-mono text-xs">{ok}/{jury.length} coinciden con lo esperado</p>

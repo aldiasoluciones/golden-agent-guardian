@@ -16,3 +16,4 @@
 - Reconciliation is generated in the browser through a dynamically imported ExcelJS module using active-tenant invoices and audit events — exports remain isolated and require no new server persistence.
 - Treasury reporting uses shared pure selectors in src/lib/treasury.ts and monthly receipt dates for monthly spending — analytics remain independently testable without changing payment rules.
 - Simulated channel attachments use browser file reading and the existing extractor, with payer detection before tenant-specific ingestion — channel entry must not bypass invoice safety checks.
+- Jury runs use temporary default-policy tenant states and replace only explicitly tagged jury invoices and their audit events afterward — repeated demonstrations stay isolated without bypassing rules or deleting unrelated records.
