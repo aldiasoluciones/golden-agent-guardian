@@ -128,3 +128,18 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
 
   return checks;
 }
+
+/** Default number of escalated invoices a finance team reviews at once. */
+export const TEAM_CAPACITY = 10;
+
+/**
+ * Escalation routing by workload: high-risk escalations always reach the active queue;
+ * the rest go to the active queue only while it has room, otherwise into a per-vendor batch.
+ */
+export function routeEscalation(checks: Check[], cop: number, p: Pick<Policies, "autoPayLimit">, activeOpen: number, capacity = TEAM_CAPACITY) {
+  const failed = checks.filter((c) => !c.passed).map((c) => c.id);
+  const alta = cop > p.autoPayLimit * 2 || failed.includes("bank") || failed.length >= 3;
+  const priority: "alta" | "normal" = alta ? "alta" : "normal";
+  const queue: "activa" | "lote" = alta || activeOpen < capacity ? "activa" : "lote";
+  return { priority, queue };
+}

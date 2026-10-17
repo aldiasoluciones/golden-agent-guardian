@@ -56,7 +56,15 @@ export type Invoice = {
   aiReasoning?: string;
   decisionReason?: string;
   receipt?: Receipt;
+  channel?: Channel;
+  sender?: string;
+  priority?: "alta" | "normal";
+  queue?: "activa" | "lote";
+  batchId?: string;
+  latencyMs?: number;
 };
+
+export type Channel = "whatsapp" | "correo" | "manual";
 
 export type AuditEvent = {
   id: string;
