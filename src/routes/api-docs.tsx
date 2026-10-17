@@ -35,7 +35,7 @@ function ApiDocs() {
   const [origin, setOrigin] = useState("https://golden-agent-guardian.lovable.app");
   useEffect(() => setOrigin(window.location.origin), []);
   const url = `${origin}/api/public/v1/decide`;
-  const [body, setBody] = useState(JSON.stringify(PRESETS.pagar!.body, null, 2));
+  const [body, setBody] = useState(JSON.stringify(PRESETS["pagar"]!.body, null, 2));
   const [res, setRes] = useState<{ status: number; ms: number; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [lang, setLang] = useState<"curl" | "js" | "py">("curl");
