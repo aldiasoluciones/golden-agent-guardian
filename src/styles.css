@@ -118,4 +118,8 @@
 
 @layer base {
   body { font-family: var(--font-sans); }
+  progress { appearance: none; border: 0; background: var(--muted); border-radius: var(--radius); overflow: hidden; }
+  progress::-webkit-progress-bar { background: var(--muted); }
+  progress::-webkit-progress-value { background: var(--primary); }
+  progress::-moz-progress-bar { background: var(--primary); }
 }
