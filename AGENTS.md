@@ -15,3 +15,4 @@
 - The home route contains only unresolved human reviews, while /analitica owns historical decision and budget reporting — resolved invoices leave the operational view without losing audit history.
 - Reconciliation is generated in the browser through a dynamically imported ExcelJS module using active-tenant invoices and audit events — exports remain isolated and require no new server persistence.
 - Treasury reporting uses shared pure selectors in src/lib/treasury.ts and monthly receipt dates for monthly spending — analytics remain independently testable without changing payment rules.
+- Simulated channel attachments use browser file reading and the existing extractor, with payer detection before tenant-specific ingestion — channel entry must not bypass invoice safety checks.
