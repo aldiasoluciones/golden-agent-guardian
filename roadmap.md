@@ -13,3 +13,4 @@
 - [x] Vista principal exclusiva de validaciones pendientes
 - [x] Analítica por tipología, motivos y presupuesto del cliente
 - [x] Verificar decisiones y descarga de extremo a extremo
+- [x] Publicar la versión con la página de Inicio en blinkagent.lovable.app
