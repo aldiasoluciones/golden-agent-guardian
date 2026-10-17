@@ -31,7 +31,7 @@ const PRESETS: Record<string, { label: string; body: object }> = {
   sinPagador: { label: "🛑 Sin pagador (FRENAR)", body: { number: "API-5001", vendorName: base.vendorName, vendorTaxId: base.vendorTaxId, bankAccount: base.bankAccount, amount: 500_000, currency: "COP", category: "Suministros" } },
 };
 
-function ApiDocs() {
+export function ApiDocs() {
   const [origin, setOrigin] = useState("https://golden-agent-guardian.lovable.app");
   useEffect(() => setOrigin(window.location.origin), []);
   const url = `${origin}/api/public/v1/decide`;

@@ -28,7 +28,7 @@ export const Route = createFileRoute("/bandeja")({
 const EXPECT_CLS = { pagar: "border-primary/50", frenar: "border-destructive/50", escalar: "border-warning/60" } as const;
 const EXPECT_TXT = { pagar: "→ paga", frenar: "→ frena", escalar: "→ escala" } as const;
 
-function Inbox() {
+export function Inbox() {
   const { invoices } = useAppState();
   const [sel, setSel] = useState<string | null>(null);
   const [live, setLive] = useState<{ id: string; checks: Check[]; reasoning: string; text: string; error?: string } | null>(null);
