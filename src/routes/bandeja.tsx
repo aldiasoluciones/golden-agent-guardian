@@ -248,6 +248,11 @@ function Inbox() {
                   <p className="font-mono text-xs text-muted-foreground">{cur.nit} · {cur.number} · vence {cur.dueDate} · {cur.category}</p>
                   <p className="mt-2 text-sm">{cur.description}</p>
                   <p className="mt-1 font-mono text-xs text-muted-foreground">Pagar a: {cur.bankAccount}</p>
+                  {cur.payer && (
+                    <p className={`mt-2 inline-block rounded border px-2 py-1 text-xs ${cur.payer.status === "desconocido" ? "border-destructive text-destructive" : "border-primary/50 text-primary"}`}>
+                      🏢 Pagador: {cur.payer.name} · {cur.payer.status === "detectado" ? `auto-detectado ${cur.payer.how}` : cur.payer.how}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-2xl font-semibold">{money(cur.amount, cur.currency)}</p>
