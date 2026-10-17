@@ -142,6 +142,7 @@ function TenantSwitch() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const lang = useLang();
+  const tenantId = useTenantId();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
@@ -171,7 +172,7 @@ function RootComponent() {
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-6 py-8">
-          <FraudAlert />
+          <FraudAlert key={tenantId} />
           <Outlet />
         </main>
         <footer className="border-t border-border py-6 text-center font-mono text-xs text-muted-foreground">

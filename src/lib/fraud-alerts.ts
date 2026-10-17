@@ -50,8 +50,10 @@ export function recordFraudAlerts(state: AppState, detectedAt: string): AppState
   for (const incident of fraudIncidents(state.invoices, state.policies)) {
     const existing = audit.find((e) => e.id === incident.id);
     if (existing?.fraudIncident?.invoices.length === incident.invoices.length) continue;
+    const first = incident.invoices[0];
+    if (!first) continue;
     const event = { id: incident.id, at: existing?.at ?? detectedAt, type: "alerta_fraude" as const,
-      invoiceId: incident.invoices[0]?.id, amount: incident.amountCOP, fraudIncident: incident,
+      invoiceId: first.id, amount: incident.amountCOP, fraudIncident: incident,
       message: `Alerta preventiva: ${incident.invoices.length} facturas sospechosas en 10 minutos. Posibles duplicados, beneficiarios no autorizados o cuentas distintas. Requiere investigación; no confirma fraude.` };
     audit = existing ? audit.map((e) => e.id === event.id ? event : e) : [event, ...audit];
   }
