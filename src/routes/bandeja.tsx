@@ -105,6 +105,20 @@ function Inbox() {
           </div>
           <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
           {upErr && <p className="mt-2 text-sm text-destructive">{upErr}</p>}
+          <div className="mt-3 text-xs text-muted-foreground">
+            <p className="mb-1 font-semibold">Facturas PDF de prueba para adjuntar:</p>
+            <ul className="space-y-1">
+              {[
+                ["FACTURE_PA-9410_ORIGINALE.pdf", "Francés · válida"],
+                ["FACTURE_PA-9410_DUPLICATA.pdf", "Francés · duplicada"],
+                ["RECHNUNG_BER-2026-884.pdf", "Alemán · fuera de lista blanca"],
+                ["FATURA_PA-BR-7714.pdf", "Portugués · cuenta falsa"],
+                ["INVOICE_TL-5590.pdf", "Inglés · supera el límite"],
+              ].map(([f, l]) => (
+                <li key={f}><a href={`/downloads/${f}`} download={f} className="text-primary underline">{l}</a></li>
+              ))}
+            </ul>
+          </div>
         </Panel>
         <Panel title={`Cuentas por pagar (${invoices.length})`}>
           {invoices.length === 0 && <p className="text-sm text-muted-foreground">Vacía. Usa una prueba rápida.</p>}
