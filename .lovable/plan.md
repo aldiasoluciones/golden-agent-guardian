@@ -22,7 +22,7 @@
      - Empresa pagadora ajena → FRENAR
      - Tasa de cambio alterada → ESCALAR
    - **Lote WOW: 100 facturas heterogéneas** (se mantiene, con ZIP descargable).
-- Se retiran de Demo: ráfaga 300/min, botones "un clic por caso", lote de 7 y la consola API completa (queda solo un enlace pequeño "Ver API REST").
+- Se mantiene en Demo la ráfaga 300/min. Se retiran de Demo: botones "un clic por caso", lote de 7 y la consola API completa (queda solo un enlace pequeño "Ver API REST").
 
 ## 3. Validación de las condiciones del reto
 Prueba automática que corre los casos del lote jurados contra el motor y confirma:
@@ -38,6 +38,6 @@ Se explicará al final con un ejemplo: un sistema externo (ERP, correo, WhatsApp
 ## Detalles técnicos
 - `bandeja.tsx`: quitar paneles de presets/subida; agregar KPIs (reutilizar lógica de `index.tsx`).
 - Nuevo componente de carga + lotes extraído de `bandeja.tsx` (read/commit, 3 workers).
-- `canales.tsx`: exportar `WhatsApp` y `Correo`; Demo los usa sin `Burst`.
+- `canales.tsx`: exportar `WhatsApp` y `Correo`; Demo los usa junto con `Burst`.
 - Generar ~10 PDFs en `public/downloads/lote-jurados/` con pagadores de tenants reales; manifiesto con decisión esperada.
 - Test nuevo en `src/lib/rules.test.ts` con un caso por regla.
