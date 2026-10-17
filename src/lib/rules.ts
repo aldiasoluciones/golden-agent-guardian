@@ -165,18 +165,18 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
 
   if (vendor?.agreedAmount) {
     const agreed = vendor.agreedAmount;
-    const diff = Math.abs(inv.amount - agreed) / agreed;
+    // Compare in the vendor's currency; if the invoice comes in another currency, convert at the configured rate.
     const same = (inv.currency ?? "COP") === vendor.currency;
-    const ok = same && diff <= p.agreedTolerance / 100;
+    const invInVendorCur = same ? inv.amount : inv.currency === "COP" ? inv.amount / p.usdRate : inv.amount * p.usdRate;
+    const diff = Math.abs(invInVendorCur - agreed) / agreed;
+    const ok = diff <= p.agreedTolerance / 100;
     checks.push({
       id: "agreed",
       label: "Monto cuadra con lo acordado",
       passed: ok,
-      detail: !same
-        ? `Factura en ${inv.currency}, pero lo acordado es en ${vendor.currency}.`
-        : ok
-          ? `Acordado ${money(agreed, vendor.currency)}; diferencia ${(diff * 100).toFixed(1)}% (tolerancia ${p.agreedTolerance}%).`
-          : `Acordado ${money(agreed, vendor.currency)}, facturado ${money(inv.amount, inv.currency)}: ${(diff * 100).toFixed(1)}% de diferencia (tolerancia ${p.agreedTolerance}%).`,
+      detail: ok
+        ? `Acordado ${money(agreed, vendor.currency)}; diferencia ${(diff * 100).toFixed(1)}% (tolerancia ${p.agreedTolerance}%)${same ? "" : `, convertido a TRM ${fmt(p.usdRate)}`}.`
+        : `Acordado ${money(agreed, vendor.currency)}, facturado ${money(inv.amount, inv.currency)}${same ? "" : ` (≈ ${money(invInVendorCur, vendor.currency)})`}: ${(diff * 100).toFixed(1)}% de diferencia (tolerancia ${p.agreedTolerance}%).`,
     });
   }
 
