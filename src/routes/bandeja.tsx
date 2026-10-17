@@ -6,8 +6,8 @@ import { Receipt } from "@/components/receipt";
 import { SAMPLES, SAMPLE_META, addInvoice, humanDecision, runAgent, type SampleKey } from "@/lib/agent";
 import { extractInvoice } from "@/lib/extract.functions";
 import { money } from "@/lib/rules";
-import { currentTenant, setTenant, useAppState } from "@/lib/store";
-import { getTenant, matchTenant } from "@/lib/tenants";
+import { setTenant, useAppState } from "@/lib/store";
+import { matchTenant } from "@/lib/tenants";
 import type { Check, Invoice } from "@/lib/types";
 import WOW_NAMES from "@/lib/wow-names.json";
 
@@ -70,7 +70,7 @@ function Inbox() {
       ? { status: "detectado", name: m.tenant.name, how: m.how }
       : hasPayer
         ? { status: "desconocido", name: String(x.clientName || x.clientTaxId || x.clientEmail), how: "sin coincidencia" }
-        : { status: "sin-dato", name: getTenant(currentTenant()).name, how: "la factura no indica pagador; se usó la empresa activa" };
+        : { status: "sin-dato", name: "No indicado", how: "la factura no dice a quién va dirigida → rechazada" };
     return () => {
     if (m) setTenant(m.tenant.id);
     return addInvoice({
@@ -132,7 +132,7 @@ function Inbox() {
   };
 
   const demoBatch = async () => {
-    const names = ["FACTURE_PA-9410_ORIGINALE.pdf", "FACTURE_PA-9410_DUPLICATA.pdf", "RECHNUNG_BER-2026-884.pdf", "FATURA_PA-BR-7714.pdf", "INVOICE_TL-5590.pdf"];
+    const names = ["FACTURE_PA-9410_ORIGINALE.pdf", "FACTURE_PA-9410_DUPLICATA.pdf", "RECHNUNG_BER-2026-884.pdf", "FATURA_PA-BR-7714.pdf", "INVOICE_TL-5590.pdf", "FACTURA_SIN-PAGADOR_SP-3301.pdf", "INVOICE_EMPRESA-AJENA_EX-7720.pdf"];
     const files = await Promise.all(names.map(async (n) => new File([await (await fetch(`/downloads/${n}`)).blob()], n, { type: "application/pdf" })));
     await onFiles(files);
   };
@@ -184,7 +184,7 @@ function Inbox() {
           <input ref={fileRef} type="file" multiple hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ""; onFiles(fs); }} />
           <button disabled={uploading || busy} onClick={demoBatch}
             className="mt-3 w-full rounded-md border border-primary/60 px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:opacity-50">
-            Procesar en lote las 5 facturas PDF de prueba
+            Procesar en lote las 7 facturas PDF de prueba
           </button>
           <button disabled={uploading || busy} onClick={wowBatch}
             className="mt-2 w-full rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50">
@@ -210,11 +210,13 @@ function Inbox() {
             <p className="mb-1 font-semibold">Facturas PDF de prueba para adjuntar:</p>
             <ul className="space-y-1">
               {[
-                ["FACTURE_PA-9410_ORIGINALE.pdf", "Francés · válida"],
-                ["FACTURE_PA-9410_DUPLICATA.pdf", "Francés · duplicada"],
-                ["RECHNUNG_BER-2026-884.pdf", "Alemán · fuera de lista blanca"],
-                ["FATURA_PA-BR-7714.pdf", "Portugués · cuenta falsa"],
-                ["INVOICE_TL-5590.pdf", "Inglés · supera el límite"],
+                ["FACTURE_PA-9410_ORIGINALE.pdf", "Francés · válida · AL DIA Demo"],
+                ["FACTURE_PA-9410_DUPLICATA.pdf", "Francés · duplicada · AL DIA Demo"],
+                ["RECHNUNG_BER-2026-884.pdf", "Alemán · fuera de lista blanca · Vértice Logistics"],
+                ["FATURA_PA-BR-7714.pdf", "Portugués · cuenta falsa · Boreal Studio"],
+                ["INVOICE_TL-5590.pdf", "Inglés · supera el límite · Nova Commerce SpA"],
+                ["FACTURA_SIN-PAGADOR_SP-3301.pdf", "Español · sin pagador → rechazada"],
+                ["INVOICE_EMPRESA-AJENA_EX-7720.pdf", "Inglés · empresa ajena → frenada"],
               ].map(([f, l]) => (
                 <li key={f}><a href={`/downloads/${f}`} download={f} className="text-primary underline">{l}</a></li>
               ))}
@@ -249,7 +251,7 @@ function Inbox() {
                   <p className="mt-2 text-sm">{cur.description}</p>
                   <p className="mt-1 font-mono text-xs text-muted-foreground">Pagar a: {cur.bankAccount}</p>
                   {cur.payer && (
-                    <p className={`mt-2 inline-block rounded border px-2 py-1 text-xs ${cur.payer.status === "desconocido" ? "border-destructive text-destructive" : "border-primary/50 text-primary"}`}>
+                    <p className={`mt-2 inline-block rounded border px-2 py-1 text-xs ${cur.payer.status !== "detectado" ? "border-destructive text-destructive" : "border-primary/50 text-primary"}`}>
                       🏢 Pagador: {cur.payer.name} · {cur.payer.status === "detectado" ? `auto-detectado ${cur.payer.how}` : cur.payer.how}
                     </p>
                   )}
@@ -291,7 +293,7 @@ function Inbox() {
             {cur.receipt && <Receipt inv={cur} />}
             {cur.status === "rechazada" && <Panel><p className="text-destructive">✗ Pago rechazado. No se movió dinero.</p></Panel>}
             {cur.status === "frenada" && (
-              <Panel><p className="text-destructive">⛔ El agente frenó esta factura. Un cobro duplicado o un beneficiario no permitido nunca se paga, ni siquiera con una excepción. Si el beneficiario es legítimo, agrégalo en Políticas y vuelve a auditar.</p></Panel>
+              <Panel><p className="text-destructive">⛔ El agente frenó esta factura. Un cobro duplicado, un beneficiario no permitido o una factura sin empresa pagadora válida nunca se paga, ni siquiera con una excepción. Si el beneficiario es legítimo, agrégalo en Políticas y vuelve a auditar.</p></Panel>
             )}
           </>
         )}

@@ -86,3 +86,18 @@ describe("escalamiento por carga del equipo", () => {
     expect(r).toEqual({ priority: "alta", queue: "activa" });
   });
 });
+
+describe("empresa pagadora", async () => {
+  const { evaluateInvoice, decide } = await import("./rules");
+  const { DEFAULT_POLICIES } = await import("./store");
+  const base = { id: "X", number: "SP-1", vendorName: "Papelería Andina S.A.S", nit: "900123456-1", bankAccount: "Bancolombia 123-456789-01", amount: 980_000, currency: "COP" as const, category: "Suministros", dueDate: "2026-10-25", description: "", source: "t", status: "pendiente" as const, createdAt: "2026-10-16" };
+  it("sin pagador indicado se frena", () => {
+    expect(decide(evaluateInvoice({ ...base, payer: { status: "sin-dato", name: "No indicado", how: "" } }, DEFAULT_POLICIES, []))).toBe("frenar");
+  });
+  it("pagador ajeno se frena", () => {
+    expect(decide(evaluateInvoice({ ...base, payer: { status: "desconocido", name: "Globex", how: "" } }, DEFAULT_POLICIES, []))).toBe("frenar");
+  });
+  it("pagador detectado puede pagarse", () => {
+    expect(decide(evaluateInvoice({ ...base, payer: { status: "detectado", name: "AL DIA Demo S.A.S", how: "" } }, DEFAULT_POLICIES, []))).toBe("pagar");
+  });
+});
