@@ -56,7 +56,7 @@ export function tenantTaxId(t: Tenant): string {
   }
 }
 const slug = (s: string) => s.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "");
-export const tenantEmail = (t: Tenant) => `facturas@${slug(t.name.split(" ").slice(0, 2).join(""))}.co`;
+export const tenantEmail = (t: Tenant) => `facturas.${t.id}@${slug(t.name.split(" ").slice(0, 2).join(""))}.co`;
 const digits = (s: string) => s.replace(/\D/g, "");
 const words = (s: string) => slug(s.replace(/\b(s\.?a\.?s|inc|ltda|spa|s\.?a\.?c|s\.?a\.? de c\.?v)\b\.?/gi, ""));
 
@@ -71,7 +71,7 @@ export function matchTenant(p: { name?: string | undefined; taxId?: string | und
   const e = (p.email ?? "").toLowerCase().trim();
   if (e) {
     const dom = e.split("@")[1];
-    const t = list.find((x) => tenantEmail(x) === e || (dom && tenantEmail(x).endsWith("@" + dom)));
+    const t = list.find((x) => tenantEmail(x) === e) ?? (dom ? list.filter((x) => tenantEmail(x).endsWith("@" + dom)) : []).find((_, __, a) => a.length === 1);
     if (t) return { tenant: t, how: "por correo de recepción" };
   }
   const n = words(p.name ?? "");
