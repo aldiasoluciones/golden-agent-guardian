@@ -15,6 +15,7 @@ import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as BandejaRouteImport } from './routes/bandeja'
 import { Route as CanalesRouteImport } from './routes/canales'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as PoliticasRouteImport } from './routes/politicas'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as ApiAuditRouteImport } from './routes/api/audit'
@@ -50,6 +51,11 @@ const CanalesRoute = CanalesRouteImport.update({
   path: '/canales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PoliticasRoute = PoliticasRouteImport.update({
   id: '/politicas',
   path: '/politicas',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/auditoria': typeof AuditoriaRoute
   '/bandeja': typeof BandejaRoute
   '/canales': typeof CanalesRoute
+  '/demo': typeof DemoRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
   '/api/audit': typeof ApiAuditRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/auditoria': typeof AuditoriaRoute
   '/bandeja': typeof BandejaRoute
   '/canales': typeof CanalesRoute
+  '/demo': typeof DemoRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
   '/api/audit': typeof ApiAuditRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/auditoria': typeof AuditoriaRoute
   '/bandeja': typeof BandejaRoute
   '/canales': typeof CanalesRoute
+  '/demo': typeof DemoRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
   '/api/audit': typeof ApiAuditRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/auditoria'
     | '/bandeja'
     | '/canales'
+    | '/demo'
     | '/politicas'
     | '/privacidad'
     | '/api/audit'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/auditoria'
     | '/bandeja'
     | '/canales'
+    | '/demo'
     | '/politicas'
     | '/privacidad'
     | '/api/audit'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/auditoria'
     | '/bandeja'
     | '/canales'
+    | '/demo'
     | '/politicas'
     | '/privacidad'
     | '/api/audit'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   AuditoriaRoute: typeof AuditoriaRoute
   BandejaRoute: typeof BandejaRoute
   CanalesRoute: typeof CanalesRoute
+  DemoRoute: typeof DemoRoute
   PoliticasRoute: typeof PoliticasRoute
   PrivacidadRoute: typeof PrivacidadRoute
   ApiAuditRoute: typeof ApiAuditRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CanalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/politicas': {
       id: '/politicas'
       path: '/politicas'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuditoriaRoute: AuditoriaRoute,
   BandejaRoute: BandejaRoute,
   CanalesRoute: CanalesRoute,
+  DemoRoute: DemoRoute,
   PoliticasRoute: PoliticasRoute,
   PrivacidadRoute: PrivacidadRoute,
   ApiAuditRoute: ApiAuditRoute,

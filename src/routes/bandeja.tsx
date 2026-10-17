@@ -1,3 +1,4 @@
+import { BackToValidations } from "@/components/back-link";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/bandeja")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Inbox,
+  component: () => <><BackToValidations /><Inbox /></>,
 });
 
 const EXPECT_CLS = { pagar: "border-primary/50", frenar: "border-destructive/50", escalar: "border-warning/60" } as const;

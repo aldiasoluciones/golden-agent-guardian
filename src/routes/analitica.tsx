@@ -1,3 +1,4 @@
+import { BackToValidations } from "@/components/back-link";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Download } from "lucide-react";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/analitica")({
     { property: "og:title", content: "Analítica y presupuesto — AL DIA · blinkagent" },
     { property: "og:description", content: "Porcentajes de pagos, frenos y escaladas, con desglose de causas y presupuesto mensual." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
-  ] }), component: Analytics,
+  ] }), component: () => <><BackToValidations /><Analytics /></>,
 });
 
 function Analytics() {
