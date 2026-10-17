@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Adjuntar archivos en Correo y adjuntar/pegar/soltar en WhatsApp
-- [ ] Verificar adjuntos y decisiones en ambos canales
+- [x] Adjuntar archivos en Correo y adjuntar/pegar/soltar en WhatsApp
+- [x] Verificar adjuntos y decisiones en ambos canales
 - [x] Canales WhatsApp y Correo en vivo
 - [x] Ráfaga 300 facturas/min
 - [x] Escalamiento por carga del equipo
