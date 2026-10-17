@@ -9,9 +9,9 @@ import type { Policies, Vendor } from "@/lib/types";
 export const Route = createFileRoute("/politicas")({
   head: () => ({
     meta: [
-      { title: "Políticas financieras — Blinka Agent by AL DIA" },
+      { title: "Políticas financieras — blinkagent by AL DIA" },
       { name: "description", content: "Límites de auto-pago, lista blanca de proveedores, presupuestos y reglas de anomalías." },
-      { property: "og:title", content: "Políticas financieras — Blinka Agent by AL DIA" },
+      { property: "og:title", content: "Políticas financieras — blinkagent by AL DIA" },
       { property: "og:description", content: "Define las reglas dentro de las que el agente de AL DIA puede pagar solo." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -14,9 +14,9 @@ import { Download } from "lucide-react";
 export const Route = createFileRoute("/auditoria")({
   head: () => ({
     meta: [
-      { title: "Registro de auditoría — Blinka Agent by AL DIA" },
+      { title: "Registro de auditoría — blinkagent by AL DIA" },
       { name: "description", content: "Bitácora inmutable de cada decisión del agente y de cada aprobación humana." },
-      { property: "og:title", content: "Registro de auditoría — Blinka Agent by AL DIA" },
+      { property: "og:title", content: "Registro de auditoría — blinkagent by AL DIA" },
       { property: "og:description", content: "Cada pago, freno y escalamiento queda registrado con su porqué." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -14,9 +14,9 @@ import WOW_NAMES from "@/lib/wow-names.json";
 export const Route = createFileRoute("/bandeja")({
   head: () => ({
     meta: [
-      { title: "Bandeja de facturas — Blinka Agent by AL DIA" },
+      { title: "Bandeja de facturas — blinkagent by AL DIA" },
       { name: "description", content: "Sube facturas o corre los casos trampa del reto y mira al agente de AL DIA pagar, frenar o escalar." },
-      { property: "og:title", content: "Bandeja de facturas — Blinka Agent by AL DIA" },
+      { property: "og:title", content: "Bandeja de facturas — blinkagent by AL DIA" },
       { property: "og:description", content: "Auditoría en vivo con razonamiento, verificación de reglas y aprobación humana." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

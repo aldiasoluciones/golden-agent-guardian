@@ -11,9 +11,9 @@ import type { Invoice } from "@/lib/types";
 
 export const Route = createFileRoute("/analitica")({
   head: () => ({ meta: [
-    { title: "Analítica y presupuesto — AL DIA · Blinka Agent" },
+    { title: "Analítica y presupuesto — AL DIA · blinkagent" },
     { name: "description", content: "Distribución de decisiones, motivos y pagos frente al presupuesto de cada empresa." },
-    { property: "og:title", content: "Analítica y presupuesto — AL DIA · Blinka Agent" },
+    { property: "og:title", content: "Analítica y presupuesto — AL DIA · blinkagent" },
     { property: "og:description", content: "Porcentajes de pagos, frenos y escaladas, con desglose de causas y presupuesto mensual." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }), component: Analytics,
