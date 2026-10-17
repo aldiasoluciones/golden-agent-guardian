@@ -1,13 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChannelAttachments } from "@/components/channel-attachments";
+import { attachmentPayload } from "@/lib/channel-files";
+import { matchTenant } from "@/lib/tenants";
 import { Panel, StatusBadge, inputCls } from "@/components/ui-bits";
 import { addInvoice, runAgent, SAMPLES } from "@/lib/agent";
 import { BURST_PER_MINUTE, BURST_SIZE, runBurst, type BurstStats } from "@/lib/burst";
 import { extractInvoice } from "@/lib/extract.functions";
 import { money, TEAM_CAPACITY } from "@/lib/rules";
-import { store, useAppState } from "@/lib/store";
-import type { Channel, Currency, Invoice } from "@/lib/types";
+import { setTenant, store, useAppState } from "@/lib/store";
+import type { Channel, Invoice } from "@/lib/types";
 
 export const Route = createFileRoute("/canales")({
   head: () => ({
@@ -39,7 +43,9 @@ type Msg = { from: "user" | "agent"; text: string; invId?: string };
 async function ingest(channel: Channel, sender: string, data: Omit<Invoice, "id" | "status" | "createdAt">) {
   const inv = addInvoice({ ...data, channel, sender, source: `${channel === "whatsapp" ? "WhatsApp" : "Correo"} · ${sender}` });
   await runAgent(inv.id, { onCheck: () => {}, onText: () => {} }, { ai: false, delay: 150 });
-  return store.get().invoices.find((i) => i.id === inv.id)!;
+  const result = store.get().invoices.find((i) => i.id === inv.id);
+  if (!result) throw new Error("No se pudo recuperar la decisión de la factura");
+  return result;
 }
 
 function reply(i: Invoice) {
@@ -51,24 +57,39 @@ function useLive(channel: Channel, sender: string) {
   const extract = useServerFn(extractInvoice);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
-  const send = async (text: string, presetKey?: keyof typeof SAMPLES) => {
+  const send = async (text: string, presetKey?: keyof typeof SAMPLES, files: File[] = []) => {
+    if (busy) return files;
     setBusy(true);
-    setMsgs((m) => [...m, { from: "user", text }, { from: "agent", text: "Factura recibida. Validando contra las reglas de la empresa…" }]);
-    let data: Omit<Invoice, "id" | "status" | "createdAt"> | null = presetKey ? SAMPLES[presetKey]() : null;
-    if (!data) {
-      const r = await extract({ data: { fileName: `${channel}.txt`, mime: "text/plain", text } });
-      if (r.ok) {
-        const x = r.invoice;
-        data = { number: String(x["number"] || `MSG-${Date.now() % 10000}`), vendorName: String(x["vendorName"]), nit: String(x["nit"]), bankAccount: String(x["bankAccount"]), amount: Number(x["amount"]), currency: (x["currency"] as Currency) ?? "COP", category: String(x["category"]), dueDate: String(x["dueDate"]), description: String(x["description"]), source: "" };
-      } else {
-        setMsgs((m) => [...m, { from: "agent", text: `No pude leer el mensaje (${r.error}). Usa un mensaje de ejemplo.` }]);
-        setBusy(false);
-        return;
+    const failed: File[] = [];
+    setMsgs((m) => [...m, { from: "user", text: [text, ...files.map((f) => `📎 ${f.name}`)].filter(Boolean).join("\n") }, { from: "agent", text: "Factura recibida. Validando contra las reglas de la empresa…" }]);
+    try {
+      const entries: (File | null)[] = files.length ? files : [null];
+      for (const file of entries) {
+        try {
+          let data: Omit<Invoice, "id" | "status" | "createdAt"> | null = !file && presetKey ? SAMPLES[presetKey]() : null;
+          if (!data) {
+            const payload = file ? await attachmentPayload(file) : { fileName: `${channel}.txt`, mime: "text/plain", text };
+            const r = await extract({ data: payload });
+            if (!r.ok) throw new Error(r.error);
+            const x = r.invoice;
+            const payerFields = { name: String(x["clientName"] || ""), taxId: String(x["clientTaxId"] || ""), email: String(x["clientEmail"] || "") };
+            const match = matchTenant(payerFields);
+            const hasPayer = !!(payerFields.name || payerFields.taxId || payerFields.email);
+            if (match) setTenant(match.tenant.id);
+            const payer: Invoice["payer"] = match
+              ? { status: "detectado", name: match.tenant.name, how: match.how }
+              : { status: hasPayer ? "desconocido" : "sin-dato", name: payerFields.name || payerFields.taxId || payerFields.email || "No indicado", how: hasPayer ? "sin coincidencia" : "la factura no indica empresa pagadora" };
+            data = { number: String(x["number"] || "S/N"), vendorName: String(x["vendorName"] || "Desconocido"), nit: String(x["nit"] || ""), bankAccount: String(x["bankAccount"] || ""), amount: Number(x["amount"]) || 0, currency: x["currency"] === "USD" ? "USD" : "COP", category: String(x["category"] || "Otro"), dueDate: String(x["dueDate"] || ""), description: String(x["description"] || ""), source: "", payer };
+          }
+          const inv = await ingest(channel, file ? `${sender} · ${file.name}` : sender, data);
+          setMsgs((m) => [...m, { from: "agent", text: `${file ? `${file.name}\n` : ""}${inv.payer ? `Empresa pagadora: ${inv.payer.name}\n` : ""}${reply(inv)}`, invId: inv.id }]);
+        } catch (error) {
+          if (file) failed.push(file);
+          setMsgs((m) => [...m, { from: "agent", text: `No se procesó ${file?.name ?? "el mensaje"}: ${error instanceof Error ? error.message : "Error inesperado"}. Puedes volver a intentarlo.` }]);
+        }
       }
-    }
-    const inv = await ingest(channel, sender, data);
-    setMsgs((m) => [...m, { from: "agent", text: reply(inv), invId: inv.id }]);
-    setBusy(false);
+    } finally { setBusy(false); }
+    return failed;
   };
   return { msgs, busy, send };
 }
@@ -90,19 +111,26 @@ export function WhatsApp() {
   const phone = "+57 310 555 0142";
   const { msgs, busy, send } = useLive("whatsapp", phone);
   const [t, setT] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   return (
     <Panel title="WhatsApp · +57 300 AL DIA">
       <p className="mb-2 text-xs text-muted-foreground">Remitente: {phone}</p>
+      <div onPaste={(e) => { const pasted = Array.from(e.clipboardData.files); if (!busy && pasted.length) { e.preventDefault(); setFiles((f) => [...f, ...pasted]); } }}
+        onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (!busy) setFiles((f) => [...f, ...Array.from(e.dataTransfer.files)]); }}>
       <Chat msgs={msgs} tone="wa" />
       <div className="mt-3 flex flex-wrap gap-2">
         {WA_PRESETS.map((p) => (
           <button key={p.label} disabled={busy} onClick={() => send(p.text, p.key)} className="rounded border border-border px-2 py-1 text-xs disabled:opacity-50">{p.label}</button>
         ))}
       </div>
-      <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (t.trim()) { send(t); setT(""); } }}>
-        <input className={inputCls} value={t} onChange={(e) => setT(e.target.value)} placeholder="Escribe la cuenta de cobro…" />
-        <button disabled={busy} className="rounded-md bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50">Enviar</button>
+      <form className="mt-3 space-y-2" onSubmit={async (e) => { e.preventDefault(); if (!busy && (t.trim() || files.length)) { const failed = await send(t, undefined, files); setFiles(failed); if (!failed.length) setT(""); } }}>
+        <ChannelAttachments files={files} onChange={setFiles} busy={busy} channel="WhatsApp" />
+        <div className="flex gap-2">
+          <input aria-label="Mensaje de WhatsApp" disabled={busy} className={`${inputCls} min-w-0`} value={t} onChange={(e) => setT(e.target.value)} placeholder="Escribe la cuenta de cobro…" />
+          <Button disabled={busy || (!t.trim() && !files.length)} type="submit">{busy ? "Enviando…" : "Enviar"}</Button>
+        </div>
       </form>
+      </div>
     </Panel>
   );
 }
@@ -112,6 +140,7 @@ export function Correo() {
   const { msgs, busy, send } = useLive("correo", from);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   return (
     <Panel title="Correo · facturas@aldia.co">
       <p className="mb-2 text-xs text-muted-foreground">De: {from}</p>
@@ -121,10 +150,11 @@ export function Correo() {
           <button key={p.label} disabled={busy} onClick={() => send(`Asunto: ${p.subject}\n\n${p.body}`, p.key)} className="rounded border border-border px-2 py-1 text-xs disabled:opacity-50">{p.label}</button>
         ))}
       </div>
-      <form className="mt-2 space-y-2" onSubmit={(e) => { e.preventDefault(); if (body.trim()) { send(`Asunto: ${subject}\n\n${body}`); setSubject(""); setBody(""); } }}>
-        <input className={inputCls} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto" />
-        <textarea className={inputCls} rows={2} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Cuerpo del correo con los datos de la factura…" />
-        <button disabled={busy} className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50">Enviar correo</button>
+      <form className="mt-2 space-y-2" onSubmit={async (e) => { e.preventDefault(); if (!busy && (body.trim() || files.length)) { const failed = await send(`Asunto: ${subject}\n\n${body}`, undefined, files); setFiles(failed); if (!failed.length) { setSubject(""); setBody(""); } } }}>
+        <input aria-label="Asunto del correo" disabled={busy} className={inputCls} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto" />
+        <textarea aria-label="Cuerpo del correo" disabled={busy} className={inputCls} rows={2} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Cuerpo del correo con los datos de la factura…" />
+        <ChannelAttachments files={files} onChange={setFiles} busy={busy} channel="Correo" />
+        <Button type="submit" disabled={busy || (!body.trim() && !files.length)}>{busy ? "Enviando…" : "Enviar correo"}</Button>
       </form>
     </Panel>
   );
