@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardCheck, BarChart3, Inbox, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReviewCase } from "@/components/review-case";
+import { TrustSeals } from "@/components/trust-seals";
 import { useAppState, useTenantId } from "@/lib/store";
 import { getTenants } from "@/lib/tenants";
 import { budgetSummary, pendingValidation } from "@/lib/treasury";
@@ -32,6 +33,7 @@ function CommandCenter() {
       <div><p className="mb-1 font-mono text-xs uppercase text-primary">AL DIA · {company?.name}</p><h1 className="text-3xl font-bold">Centro de Comando</h1></div>
       <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/bandeja"><Inbox />Bandeja</Link></Button><Button asChild variant="secondary"><Link to="/analitica"><BarChart3 />Analítica</Link></Button></div>
     </header>
+    <TrustSeals />
     <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Kpi label="Pendientes de tu firma" value={String(pending.length)} cls="text-warning" />
       <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Pagado vs. presupuesto</p><p className="mt-1 font-mono text-lg">{budget.percent.toFixed(0)}%</p><progress aria-label="Presupuesto utilizado" max={100} value={Math.min(100, budget.percent)} className="mt-2 h-1.5 w-full" /><p className="mt-1 truncate text-[11px] text-muted-foreground">{fmt(budget.amount)} de {fmt(policies.periodLimit)}</p></div>
