@@ -12,3 +12,6 @@
 - All money rules compare in COP via the configured USD rate — one base currency keeps limits and budgets consistent.
 - Every decision stores a deterministic plain-language decisionReason — explainability must not depend on the AI being available.
 - Client companies (tenants) are generated deterministically in src/lib/tenants.ts; each tenant's state lives under its own localStorage key — keeps the 100 companies' policies, invoices and audit fully isolated.
+- The home route contains only unresolved human reviews, while /analitica owns historical decision and budget reporting — resolved invoices leave the operational view without losing audit history.
+- Reconciliation is generated in the browser through a dynamically imported ExcelJS module using active-tenant invoices and audit events — exports remain isolated and require no new server persistence.
+- Treasury reporting uses shared pure selectors in src/lib/treasury.ts and monthly receipt dates for monthly spending — analytics remain independently testable without changing payment rules.

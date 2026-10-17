@@ -33,7 +33,8 @@ export function useLang(): Lang {
 
 const T = {
   es: {
-    nav_treasury: "Tesorería",
+    nav_treasury: "Validaciones",
+    nav_analytics: "Analítica",
     nav_inbox: "Bandeja de facturas",
     nav_channels: "WhatsApp y Correo",
     nav_policies: "Políticas",
@@ -60,7 +61,8 @@ const T = {
     explainability: "Explicabilidad",
   },
   en: {
-    nav_treasury: "Treasury",
+    nav_treasury: "Reviews",
+    nav_analytics: "Analytics",
     nav_inbox: "Invoice inbox",
     nav_channels: "WhatsApp & Email",
     nav_policies: "Policies",
