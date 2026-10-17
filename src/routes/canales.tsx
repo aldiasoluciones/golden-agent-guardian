@@ -29,6 +29,8 @@ const WA_PRESETS = [
 ];
 const MAIL_PRESETS = [
   { label: "Contratista USD", key: "validaUsd" as const, subject: "Invoice DevStudio — October", body: "Hi, attached invoice from DevStudio Remote LLC (EIN 88-1234567), 800 USD monthly retainer, wire to Chase 021000021-77441." },
+  { label: "Contratista Brasil (PT)", key: "br" as const, subject: "Fatura outubro — consultoria", body: "Olá, segue a fatura da Paulo Andrade Consultoria (CNPJ 12.345.678/0001-90), 1.100 USD, via SWIFT ITAUBRSP, conta 0445-77881-2." },
+  { label: "Agencia EE. UU. (EN)", key: "usAch" as const, subject: "BrightOps October retainer", body: "Hello, invoice from BrightOps Agency Inc (EIN 47-2093815), 900 USD, ACH routing 026009593, account 88901234." },
   { label: "Supera el límite", key: "limite" as const, subject: "Factura fletes temporada alta", body: "Buen día, TransLogix Colombia NIT 830777111-9 envía factura por $6.200.000 por fletes nacionales. Cuenta BBVA 0013-554433." },
 ];
 

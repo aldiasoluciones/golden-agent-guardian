@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import aldiaMark from "../assets/aldia-mark.png";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { setLang, t, useLang, type Lang, type TKey } from "../lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -90,16 +91,34 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const NAV = [
-  { to: "/", label: "Tesorería" },
-  { to: "/bandeja", label: "Bandeja de facturas" },
-  { to: "/canales", label: "WhatsApp y Correo" },
-  { to: "/politicas", label: "Políticas" },
-  { to: "/auditoria", label: "Registro de auditoría" },
-] as const;
+const NAV: { to: "/" | "/bandeja" | "/canales" | "/politicas" | "/auditoria"; key: TKey }[] = [
+  { to: "/", key: "nav_treasury" },
+  { to: "/bandeja", key: "nav_inbox" },
+  { to: "/canales", key: "nav_channels" },
+  { to: "/politicas", key: "nav_policies" },
+  { to: "/auditoria", key: "nav_audit" },
+];
+
+function LangSwitch() {
+  const lang = useLang();
+  return (
+    <div className="flex overflow-hidden rounded-md border border-border font-mono text-xs">
+      {(["es", "en"] as Lang[]).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          className={`px-2 py-1 uppercase ${lang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const lang = useLang();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
@@ -118,18 +137,19 @@ function RootComponent() {
                   className="rounded px-3 py-1.5 text-muted-foreground hover:text-foreground"
                   activeProps={{ className: "rounded px-3 py-1.5 bg-secondary text-foreground" }}
                 >
-                  {n.label}
+                  {t(lang, n.key)}
                 </Link>
               ))}
             </nav>
-            <span className="ml-auto font-mono text-xs text-muted-foreground">Reto Blinka · pagos simulados</span>
+            <span className="ml-auto hidden font-mono text-xs text-muted-foreground md:inline">{t(lang, "tagline")}</span>
+            <LangSwitch />
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-6 py-8">
           <Outlet />
         </main>
         <footer className="border-t border-border py-6 text-center font-mono text-xs text-muted-foreground">
-          Producto de AL DIA · Powered by ALJ · Datos ficticios, ningún pago real
+          {t(lang, "footer")}
         </footer>
       </div>
     </QueryClientProvider>

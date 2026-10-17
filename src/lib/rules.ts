@@ -23,6 +23,18 @@ export function spentByCategory(invoices: Invoice[], p: Pick<Policies, "usdRate"
 const month = (iso: string) => iso.slice(0, 7);
 const norm = (s: string) => s.replace(/[^0-9a-z]/gi, "").toLowerCase();
 
+/** Format validation per tax id type (legal requirement to pay). */
+export function taxIdMatches(type: string, id: string): boolean {
+  const d = id.replace(/[^0-9]/g, "");
+  switch (type) {
+    case "NIT": return d.length >= 8 && d.length <= 10;
+    case "EIN": return d.length === 9;
+    case "CNPJ": return d.length === 14;
+    case "RFC": return /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i.test(id.trim());
+    default: return id.trim().length >= 4;
+  }
+}
+
 export type Decision = "pagar" | "frenar" | "escalar";
 export function decide(checks: Check[]): Decision {
   const failed = checks.filter((c) => !c.passed);
@@ -72,6 +84,55 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
       passed: ok,
       detail: !vendor ? "No hay cuenta registrada para comparar." : ok ? `Cuenta ${inv.bankAccount} coincide.` : `Pide pagar a ${inv.bankAccount}, pero la registrada es ${vendor.bankAccount}.`,
     });
+  }
+
+  if (vendor) {
+    // Legal/tax identity: the tax id on the invoice must match the type registered for the vendor's country.
+    const taxType = vendor.taxIdType ?? "OTRO";
+    const idOk = taxIdMatches(taxType, inv.nit);
+    checks.push({
+      id: "taxId",
+      label: `Identificación fiscal válida (${taxType} · ${vendor.country ?? "?"})`,
+      passed: idOk,
+      detail: idOk
+        ? `${taxType} ${inv.nit} tiene el formato correcto para ${vendor.country}.`
+        : `«${inv.nit || "(vacío)"}» no es un ${taxType} válido (${vendor.country}). Requisito legal para pagar.`,
+    });
+
+    if (p.requireLegalDoc) {
+      const doc = vendor.legalDoc ?? "NINGUNO";
+      const need = vendor.country === "US" ? "W-9" : vendor.country === "CO" ? "RUT" : "W-8BEN/W-8BEN-E";
+      const ok = doc !== "NINGUNO";
+      checks.push({
+        id: "legalDoc",
+        label: "Documento legal en archivo",
+        passed: ok,
+        detail: ok
+          ? `${doc} registrado y vigente.`
+          : `Falta el documento legal exigido (${need}). Sin él, el pago no cumple los requisitos fiscales.`,
+      });
+    }
+
+    // International rail: cross-border payments need a valid SWIFT/ACH account reference.
+    const intl = vendor.country !== undefined && vendor.country !== "CO";
+    if (intl) {
+      const rail = vendor.payMethod ?? "local";
+      const acct = inv.bankAccount.toUpperCase();
+      const ok =
+        rail === "swift"
+          ? /SWIFT[: ]?[A-Z0-9]{8,11}/.test(acct) || /[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?/.test(acct)
+          : rail === "ach"
+            ? /\b\d{9}\b/.test(acct)
+            : false;
+      checks.push({
+        id: "intlRail",
+        label: `Riel internacional válido (${rail.toUpperCase()})`,
+        passed: ok,
+        detail: ok
+          ? `Cuenta ${rail.toUpperCase()} verificada para transferencia internacional.`
+          : `Pago internacional a ${vendor.country} exige ${rail === "swift" ? "código SWIFT/BIC" : rail === "ach" ? "routing ACH de 9 dígitos" : "un riel internacional"} en la cuenta; «${inv.bankAccount}» no lo tiene.`,
+      });
+    }
   }
 
   if (vendor?.agreedAmount) {

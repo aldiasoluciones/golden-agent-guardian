@@ -1,5 +1,13 @@
 export type Currency = "COP" | "USD";
 
+export type Country = "CO" | "US" | "BR" | "MX" | "OTRO";
+/** Tax document type per country: NIT (CO), EIN (US), CNPJ (BR), RFC (MX). */
+export type TaxIdType = "NIT" | "EIN" | "CNPJ" | "RFC" | "OTRO";
+/** Legal doc on file: RUT (CO), W-9 (US entity), W-8BEN/W-8BEN-E (foreign payee of a US company). */
+export type LegalDoc = "RUT" | "W-9" | "W-8BEN" | "W-8BEN-E" | "NINGUNO";
+/** Payment rail: local transfer, international wire (SWIFT), or US ACH. */
+export type PayMethod = "local" | "swift" | "ach";
+
 export type Vendor = {
   id: string;
   name: string;
@@ -11,6 +19,10 @@ export type Vendor = {
   avgAmount: number;
   /** Contracted amount per invoice, in the vendor's currency (optional). */
   agreedAmount?: number | undefined;
+  country?: Country;
+  taxIdType?: TaxIdType;
+  legalDoc?: LegalDoc;
+  payMethod?: PayMethod;
 };
 
 export type Policies = {
@@ -21,6 +33,8 @@ export type Policies = {
   anomalyMultiplier: number;
   requireBankMatch: boolean;
   blockDuplicates: boolean;
+  /** Require a legal tax document (RUT/W-9/W-8) on file before paying. */
+  requireLegalDoc: boolean;
   budgets: Record<string, number>;
   vendors: Vendor[];
 };

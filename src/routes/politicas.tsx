@@ -26,7 +26,7 @@ function setP(patch: Partial<Policies>, msg: string) {
 
 function PoliciesPage() {
   const { policies: p } = useAppState();
-  const [v, setV] = useState<Omit<Vendor, "id">>({ name: "", nit: "", bankAccount: "", category: "Suministros", currency: "COP", avgAmount: 1_000_000 });
+  const [v, setV] = useState<Omit<Vendor, "id">>({ name: "", nit: "", bankAccount: "", category: "Suministros", currency: "COP", avgAmount: 1_000_000, country: "CO", taxIdType: "NIT", legalDoc: "RUT", payMethod: "local" });
 
   return (
     <div className="space-y-6">
@@ -59,8 +59,8 @@ function PoliciesPage() {
           <input type="number" step="0.1" className={`${inputCls} mt-1`} value={p.anomalyMultiplier}
             onChange={(e) => setP({ anomalyMultiplier: Number(e.target.value) }, `Umbral de anomalía cambiado a ${e.target.value}×.`)} />
         </Panel>
-        <Panel title="Controles antifraude">
-          {([["requireBankMatch", "Exigir cuenta bancaria registrada"], ["blockDuplicates", "Bloquear facturas duplicadas"]] as const).map(([k, l]) => (
+        <Panel title="Controles antifraude y legales">
+          {([["requireBankMatch", "Exigir cuenta bancaria registrada"], ["blockDuplicates", "Bloquear facturas duplicadas"], ["requireLegalDoc", "Exigir documento legal (RUT / W-9 / W-8)"]] as const).map(([k, l]) => (
             <label key={k} className="mb-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="accent-primary" checked={p[k]}
                 onChange={(e) => setP({ [k]: e.target.checked }, `${l}: ${e.target.checked ? "activado" : "desactivado"}.`)} />
@@ -86,13 +86,16 @@ function PoliciesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left font-mono text-xs text-muted-foreground">
-              <tr><th className="py-2">Proveedor</th><th>NIT</th><th>Cuenta registrada</th><th>Categoría</th><th>Moneda</th><th>Promedio</th><th>Acordado</th><th /></tr>
+              <tr><th className="py-2">Proveedor</th><th>ID fiscal</th><th>País</th><th>Doc. legal</th><th>Riel</th><th>Cuenta registrada</th><th>Categoría</th><th>Moneda</th><th>Promedio</th><th>Acordado</th><th /></tr>
             </thead>
             <tbody className="divide-y divide-border">
               {p.vendors.map((x) => (
                 <tr key={x.id}>
                   <td className="py-2">{x.name}</td>
                   <td className="font-mono">{x.nit}</td>
+                  <td className="font-mono">{x.country ?? "—"}</td>
+                  <td className={`font-mono ${x.legalDoc === "NINGUNO" ? "text-destructive" : ""}`}>{x.legalDoc ?? "—"}</td>
+                  <td className="font-mono uppercase">{x.payMethod ?? "—"}</td>
                   <td className="font-mono">{x.bankAccount}</td>
                   <td>{x.category}</td>
                   <td className="font-mono">{x.currency}</td>
@@ -121,6 +124,15 @@ function PoliciesPage() {
           </select>
           <select className={inputCls} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "COP" | "USD" })}><option>COP</option><option>USD</option></select>
           <input type="number" className={inputCls} placeholder="Promedio" value={v.avgAmount} onChange={(e) => setV({ ...v, avgAmount: Number(e.target.value) })} />
+          <select className={inputCls} value={v.country} onChange={(e) => setV({ ...v, country: e.target.value as NonNullable<Vendor["country"]> })}>
+            <option value="CO">Colombia</option><option value="US">EE. UU.</option><option value="BR">Brasil</option><option value="MX">México</option><option value="OTRO">Otro</option>
+          </select>
+          <select className={inputCls} value={v.legalDoc} onChange={(e) => setV({ ...v, legalDoc: e.target.value as NonNullable<Vendor["legalDoc"]> })}>
+            <option value="RUT">RUT</option><option value="W-9">W-9</option><option value="W-8BEN">W-8BEN</option><option value="W-8BEN-E">W-8BEN-E</option><option value="NINGUNO">Sin documento</option>
+          </select>
+          <select className={inputCls} value={v.payMethod} onChange={(e) => setV({ ...v, payMethod: e.target.value as NonNullable<Vendor["payMethod"]> })}>
+            <option value="local">Local</option><option value="swift">SWIFT</option><option value="ach">ACH</option>
+          </select>
           <button className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Agregar</button>
         </form>
       </Panel>
