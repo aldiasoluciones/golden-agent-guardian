@@ -128,13 +128,14 @@ export async function humanDecision(id: string, approve: boolean, approver: stri
 const today = (d: number) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
 const rnd = (p: string) => `${p}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-export type SampleKey = "valida" | "validaUsd" | "br" | "usAch" | "duplicado" | "nuevo" | "noCuadra" | "limite" | "presupuesto" | "cuenta" | "sinDoc" | "swiftMalo";
+export type SampleKey = "valida" | "validaUsd" | "br" | "usAch" | "tasaAlterada" | "duplicado" | "nuevo" | "noCuadra" | "limite" | "presupuesto" | "cuenta" | "sinDoc" | "swiftMalo";
 
 export const SAMPLE_META: { key: SampleKey; label: string; hint: string; expect: "pagar" | "frenar" | "escalar" }[] = [
   { key: "valida", label: "Factura normal (COP)", hint: "Papelería · $1.850.000", expect: "pagar" },
   { key: "validaUsd", label: "Contratista en USD (ACH)", hint: "DevStudio · 800 USD acordados · W-9", expect: "pagar" },
   { key: "br", label: "Contratista Brasil (SWIFT)", hint: "Paulo Andrade · 1.100 USD · CNPJ + W-8BEN", expect: "pagar" },
-  { key: "usAch", label: "Agencia EE. UU. (ACH)", hint: "BrightOps · 900 USD · EIN + W-9", expect: "pagar" },
+  { key: "usAch", label: "Agencia EE. UU. (cobra en COP)", hint: "BrightOps · 950 USD → COP a TRM · EIN + W-9", expect: "pagar" },
+  { key: "tasaAlterada", label: "Tasa de cambio alterada", hint: "BrightOps cobra 1.050 USD inflando la conversión", expect: "escalar" },
   { key: "duplicado", label: "Cobro duplicado", hint: "Misma factura ya pagada", expect: "frenar" },
   { key: "nuevo", label: "Beneficiario nuevo", hint: "No está en la lista permitida", expect: "frenar" },
   { key: "noCuadra", label: "No cuadra con lo acordado", hint: "Acordado 800 USD · cobra 1.150", expect: "escalar" },
@@ -166,7 +167,8 @@ export const SAMPLES: Record<SampleKey, () => NewInvoice> = {
   presupuesto: () => ({ number: rnd("AI"), vendorName: "Aseo Integral Bogotá", nit: "900888999-0", bankAccount: "Banco de Bogotá 221-99881", amount: 3_200_000, currency: "COP", category: "Servicios", dueDate: today(4), description: "Aseo y desinfección de oficinas — mes completo", source: "Set del reto: presupuesto insuficiente" }),
   cuenta: () => ({ number: rnd("CN"), vendorName: "Servicios Cloud Nova", nit: "901555222-3", bankAccount: "Nequi 3105559911", amount: 4_100_000, currency: "COP", category: "Tecnología", dueDate: today(1), description: "URGENTE: renovación de licencias. Favor pagar HOY a nuestra NUEVA cuenta.", source: "Set del reto: cambio de cuenta (chat)" }),
   br: () => ({ number: rnd("PA-BR"), vendorName: "Paulo Andrade Consultoria", nit: "CNPJ 12.345.678/0001-90", bankAccount: "Itaú SWIFT: ITAUBRSP · 0445-77881-2", amount: 1_100, currency: "USD", category: "Tecnología", dueDate: today(6), description: "Consultoria de produto — mensalidade (invoice em português)", source: "Set del reto: contratista Brasil (SWIFT, W-8BEN)" }),
-  usAch: () => ({ number: rnd("BO"), vendorName: "BrightOps Agency Inc", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 900, currency: "USD", category: "Servicios", dueDate: today(9), description: "Monthly marketing ops retainer (invoice in English)", source: "Set del reto: agencia EE. UU. (ACH, W-9)" }),
+  usAch: () => ({ number: rnd("BO"), vendorName: "BrightOps Agency Inc", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 950, currency: "USD", category: "Servicios", dueDate: today(9), description: "Monthly marketing ops retainer (invoice in English)", source: "Set del reto: agencia EE. UU. (ACH, W-9)" }),
+  tasaAlterada: () => ({ number: rnd("BO"), vendorName: "BrightOps Agency Inc", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 1_050, currency: "USD", category: "Servicios", dueDate: today(9), description: "Retainer + 'ajuste cambiario' no pactado (tasa inflada)", source: "Set del reto: tasa de cambio alterada" }),
   sinDoc: () => ({ number: rnd("MP"), vendorName: "MarketPro Digital S.A.S", nit: "901777333-5", bankAccount: "Bancolombia 555-112233-44", amount: 1_900_000, currency: "COP", category: "Servicios", dueDate: today(5), description: "Campaña digital de octubre", source: "Set del reto: proveedor sin documento legal (falta RUT)" }),
   swiftMalo: () => ({ number: rnd("PA-BR"), vendorName: "Paulo Andrade Consultoria", nit: "CNPJ 12.345.678/0001-90", bankAccount: "Itaú cuenta 0445-77881-2", amount: 1_100, currency: "USD", category: "Tecnología", dueDate: today(6), description: "Consultoria de produto — mensalidade", source: "Set del reto: pago internacional sin código SWIFT" }),
 };

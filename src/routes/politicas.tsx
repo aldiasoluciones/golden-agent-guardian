@@ -53,6 +53,10 @@ function PoliciesPage() {
           <label className="mt-3 block text-sm">Tolerancia sobre lo acordado (%)</label>
           <input type="number" className={`${inputCls} mt-1`} value={p.agreedTolerance}
             onChange={(e) => setP({ agreedTolerance: Number(e.target.value) }, `Tolerancia sobre monto acordado = ${e.target.value}%.`)} />
+          <label className="mt-3 block text-sm">Tolerancia cambiaria (%)</label>
+          <input type="number" className={`${inputCls} mt-1`} value={p.fxTolerance}
+            onChange={(e) => setP({ fxTolerance: Number(e.target.value) }, `Tolerancia cambiaria = ${e.target.value}%.`)} />
+          <p className="mt-2 font-mono text-xs text-muted-foreground">Si la factura viene en otra moneda, la conversión debe cuadrar con la tasa oficial ±{p.fxTolerance}%.</p>
         </Panel>
         <Panel title="Detección de anomalías">
           <label className="text-sm">Multiplicador sobre el promedio histórico</label>
@@ -86,7 +90,7 @@ function PoliciesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left font-mono text-xs text-muted-foreground">
-              <tr><th className="py-2">Proveedor</th><th>ID fiscal</th><th>País</th><th>Doc. legal</th><th>Riel</th><th>Cuenta registrada</th><th>Categoría</th><th>Moneda</th><th>Promedio</th><th>Acordado</th><th /></tr>
+              <tr><th className="py-2">Proveedor</th><th>ID fiscal</th><th>País</th><th>Doc. legal</th><th>Riel</th><th>Cobra en</th><th>Cuenta registrada</th><th>Categoría</th><th>Moneda</th><th>Promedio</th><th>Acordado</th><th /></tr>
             </thead>
             <tbody className="divide-y divide-border">
               {p.vendors.map((x) => (
@@ -96,6 +100,7 @@ function PoliciesPage() {
                   <td className="font-mono">{x.country ?? "—"}</td>
                   <td className={`font-mono ${x.legalDoc === "NINGUNO" ? "text-destructive" : ""}`}>{x.legalDoc ?? "—"}</td>
                   <td className="font-mono uppercase">{x.payMethod ?? "—"}</td>
+                  <td className="font-mono">{x.payoutCurrency ?? x.currency}</td>
                   <td className="font-mono">{x.bankAccount}</td>
                   <td>{x.category}</td>
                   <td className="font-mono">{x.currency}</td>
@@ -132,6 +137,9 @@ function PoliciesPage() {
           </select>
           <select className={inputCls} value={v.payMethod} onChange={(e) => setV({ ...v, payMethod: e.target.value as NonNullable<Vendor["payMethod"]> })}>
             <option value="local">Local</option><option value="swift">SWIFT</option><option value="ach">ACH</option>
+          </select>
+          <select className={inputCls} title="Moneda en que prefiere cobrar" value={v.payoutCurrency ?? ""} onChange={(e) => setV({ ...v, payoutCurrency: (e.target.value || undefined) as Vendor["payoutCurrency"] })}>
+            <option value="">Cobra en su moneda</option><option value="COP">Cobra en COP</option><option value="USD">Cobra en USD</option>
           </select>
           <button className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Agregar</button>
         </form>

@@ -5,7 +5,7 @@ import type { Channel } from "./types";
 export const BURST_SIZE = 300;
 export const BURST_PER_MINUTE = 300;
 
-const MIX: SampleKey[] = ["valida", "valida", "valida", "validaUsd", "validaUsd", "nuevo", "noCuadra", "limite", "presupuesto", "cuenta"];
+const MIX: SampleKey[] = ["valida", "valida", "valida", "validaUsd", "validaUsd", "nuevo", "noCuadra", "limite", "presupuesto", "cuenta", "tasaAlterada"];
 const PHONES = ["+57 310 555 0142", "+57 315 220 8891", "+57 300 774 1203", "+1 305 555 0199"];
 const MAILS = ["facturacion@papeleria-andina.co", "billing@devstudio-remote.com", "cobros@translogix.co", "cartera@aseointegral.co"];
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)]!;

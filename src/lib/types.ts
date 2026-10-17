@@ -23,6 +23,8 @@ export type Vendor = {
   taxIdType?: TaxIdType;
   legalDoc?: LegalDoc;
   payMethod?: PayMethod;
+  /** Currency the vendor prefers to be paid in (defaults to the vendor's currency). */
+  payoutCurrency?: Currency | undefined;
 };
 
 export type Policies = {
@@ -30,6 +32,8 @@ export type Policies = {
   periodLimit: number;
   usdRate: number;
   agreedTolerance: number;
+  /** Max FX deviation (%) vs the configured rate when the invoice currency differs from the vendor's payout currency. */
+  fxTolerance: number;
   anomalyMultiplier: number;
   requireBankMatch: boolean;
   blockDuplicates: boolean;

@@ -45,13 +45,22 @@ describe("reglas legales e internacionales", () => {
   const mp: Invoice = { ...base, id: "mp", vendorName: "MarketPro Digital S.A.S", nit: "901777333-5", bankAccount: "Bancolombia 555-112233-44", amount: 1_900_000, category: "Servicios" };
   it("contratista Brasil con CNPJ, W-8BEN y SWIFT se paga", () => expect(decide(run(br))).toBe("pagar"));
   it("agencia EE. UU. con EIN, W-9 y routing ACH se paga", () =>
-    expect(decide(run({ ...base, id: "us", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 900, currency: "USD", category: "Tecnología" }))).toBe("pagar"));
+    expect(decide(run({ ...base, id: "us", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 950, currency: "USD", category: "Tecnología" }))).toBe("pagar"));
   it("proveedor sin documento legal escala (nunca paga solo)", () => {
     expect(failed(mp)).toContain("legalDoc");
     expect(decide(run(mp))).toBe("escalar");
   });
   it("pago internacional sin código SWIFT escala", () => {
     expect(failed({ ...br, bankAccount: "Itaú cuenta 0445-77881-2" })).toContain("intlRail");
+  });
+  it("proveedor que prefiere COP: factura en USD convertida a TRM se paga", () => {
+    const us = { ...base, id: "us", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 950, currency: "USD" as const, category: "Tecnología" };
+    expect(decide(run(us))).toBe("pagar");
+  });
+  it("tasa de cambio alterada escala (desvío > 2%)", () => {
+    const us = { ...base, id: "us2", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 1_050, currency: "USD" as const, category: "Servicios" };
+    expect(failed(us)).toContain("fx");
+    expect(decide(run(us))).toBe("escalar");
   });
   it("valida formatos de ID fiscal por país", () => {
     expect(taxIdMatches("NIT", "900123456-1")).toBe(true);
