@@ -15,7 +15,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import aldiaMark from "../assets/aldia-mark.png";
-import blinkaLogo from "../assets/blinka-logo.svg";
+import blinkaLogo from "../assets/blinka-isotipo.svg";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setLang, t, useLang, type Lang, type TKey } from "../lib/i18n";
 
