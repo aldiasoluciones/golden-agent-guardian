@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decide, evaluateInvoice, routeEscalation } from "./rules";
+import { decide, evaluateInvoice, routeEscalation, taxIdMatches } from "./rules";
 import { DEFAULT_POLICIES } from "./store";
 import type { Invoice } from "./types";
 
@@ -45,7 +45,7 @@ describe("reglas legales e internacionales", () => {
   const mp: Invoice = { ...base, id: "mp", vendorName: "MarketPro Digital S.A.S", nit: "901777333-5", bankAccount: "Bancolombia 555-112233-44", amount: 1_900_000, category: "Servicios" };
   it("contratista Brasil con CNPJ, W-8BEN y SWIFT se paga", () => expect(decide(run(br))).toBe("pagar"));
   it("agencia EE. UU. con EIN, W-9 y routing ACH se paga", () =>
-    expect(decide(run({ ...base, id: "us", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 900, currency: "USD", category: "Servicios" }))).toBe("pagar"));
+    expect(decide(run({ ...base, id: "us", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 900, currency: "USD", category: "Tecnología" }))).toBe("pagar"));
   it("proveedor sin documento legal escala (nunca paga solo)", () => {
     expect(failed(mp)).toContain("legalDoc");
     expect(decide(run(mp))).toBe("escalar");
@@ -53,7 +53,14 @@ describe("reglas legales e internacionales", () => {
   it("pago internacional sin código SWIFT escala", () => {
     expect(failed({ ...br, bankAccount: "Itaú cuenta 0445-77881-2" })).toContain("intlRail");
   });
-  it("NIT con formato inválido escala", () => expect(failed({ ...base, nit: "123" })).toContain("taxId"));
+  it("valida formatos de ID fiscal por país", () => {
+    expect(taxIdMatches("NIT", "900123456-1")).toBe(true);
+    expect(taxIdMatches("NIT", "123")).toBe(false);
+    expect(taxIdMatches("EIN", "EIN 88-1234567")).toBe(true);
+    expect(taxIdMatches("EIN", "88-123")).toBe(false);
+    expect(taxIdMatches("CNPJ", "12.345.678/0001-90")).toBe(true);
+    expect(taxIdMatches("RFC", "XAXX010101000")).toBe(true);
+  });
 });
 
 describe("escalamiento por carga del equipo", () => {

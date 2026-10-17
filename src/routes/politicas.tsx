@@ -124,13 +124,13 @@ function PoliciesPage() {
           </select>
           <select className={inputCls} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "COP" | "USD" })}><option>COP</option><option>USD</option></select>
           <input type="number" className={inputCls} placeholder="Promedio" value={v.avgAmount} onChange={(e) => setV({ ...v, avgAmount: Number(e.target.value) })} />
-          <select className={inputCls} value={v.country} onChange={(e) => setV({ ...v, country: e.target.value as Vendor["country"] })}>
+          <select className={inputCls} value={v.country} onChange={(e) => setV({ ...v, country: e.target.value as NonNullable<Vendor["country"]> })}>
             <option value="CO">Colombia</option><option value="US">EE. UU.</option><option value="BR">Brasil</option><option value="MX">México</option><option value="OTRO">Otro</option>
           </select>
-          <select className={inputCls} value={v.legalDoc} onChange={(e) => setV({ ...v, legalDoc: e.target.value as Vendor["legalDoc"] })}>
+          <select className={inputCls} value={v.legalDoc} onChange={(e) => setV({ ...v, legalDoc: e.target.value as NonNullable<Vendor["legalDoc"]> })}>
             <option value="RUT">RUT</option><option value="W-9">W-9</option><option value="W-8BEN">W-8BEN</option><option value="W-8BEN-E">W-8BEN-E</option><option value="NINGUNO">Sin documento</option>
           </select>
-          <select className={inputCls} value={v.payMethod} onChange={(e) => setV({ ...v, payMethod: e.target.value as Vendor["payMethod"] })}>
+          <select className={inputCls} value={v.payMethod} onChange={(e) => setV({ ...v, payMethod: e.target.value as NonNullable<Vendor["payMethod"]> })}>
             <option value="local">Local</option><option value="swift">SWIFT</option><option value="ach">ACH</option>
           </select>
           <button className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Agregar</button>
