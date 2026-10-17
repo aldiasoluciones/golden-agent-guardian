@@ -60,14 +60,16 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
   const checks: Check[] = [];
 
   if (inv.payer) {
-    const ok = inv.payer.status !== "desconocido";
+    const ok = inv.payer.status === "detectado";
     checks.push({
       id: "payer",
       label: "Factura dirigida a esta empresa pagadora",
       passed: ok,
       detail: ok
         ? `Facturada a ${inv.payer.name} (${inv.payer.how}).`
-        : `Viene facturada a «${inv.payer.name}», que no es cliente registrado. Nunca se paga una factura de otra empresa.`,
+        : inv.payer.status === "sin-dato"
+          ? "La factura no indica a qué empresa va dirigida (Facturado a / Bill to). Se rechaza: nunca se paga sin pagador identificado."
+          : `Viene facturada a «${inv.payer.name}», que no es cliente registrado. Nunca se paga una factura de otra empresa.`,
     });
   }
 
