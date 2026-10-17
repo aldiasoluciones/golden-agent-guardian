@@ -152,16 +152,34 @@ function Inbox() {
             ))}
           </div>
         </Panel>
-        <Panel title="Subir factura">
+        <Panel title="Subir facturas (una o muchas)">
           <div
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}
-            onClick={() => fileRef.current?.click()}
+            onDrop={(e) => { e.preventDefault(); if (!uploading) onFiles(Array.from(e.dataTransfer.files)); }}
+            onClick={() => !uploading && fileRef.current?.click()}
             className="cursor-pointer rounded-md border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary"
           >
-            {uploading ? "La IA está leyendo la factura…" : "Arrastra o haz clic · PDF, imagen, correo o chat (texto)"}
+            {uploading ? (batch ? `Procesando lote: ${batch.done} de ${batch.total}…` : "La IA está leyendo la factura…") : "Arrastra o haz clic · selecciona varias facturas a la vez (PDF, imagen, correo o texto)"}
           </div>
-          <input ref={fileRef} type="file" hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
+          <input ref={fileRef} type="file" multiple hidden accept=".pdf,image/*,.txt,.csv,.json,.xml,.eml" onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ""; onFiles(fs); }} />
+          <button disabled={uploading || busy} onClick={demoBatch}
+            className="mt-3 w-full rounded-md border border-primary/60 px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary disabled:opacity-50">
+            Procesar en lote las 5 facturas PDF de prueba
+          </button>
+          {batch && (
+            <div className="mt-3 rounded-md border border-border p-3 text-xs">
+              <div className="mb-1 flex justify-between font-semibold"><span>Lote masivo</span><span>{batch.done}/{batch.total}</span></div>
+              <div className="h-2 overflow-hidden rounded bg-secondary"><div className="h-full bg-primary transition-all" style={{ width: `${(batch.done / batch.total) * 100}%` }} /></div>
+              {batchStats && (
+                <div className="mt-2 flex gap-3">
+                  <span className="text-primary">Pagadas {batchStats.pagada}</span>
+                  <span className="text-destructive">Frenadas {batchStats.frenada}</span>
+                  <span className="text-warning">Escaladas {batchStats.escalada}</span>
+                </div>
+              )}
+              {batch.errors.map((er) => <p key={er} className="mt-1 text-destructive">{er}</p>)}
+            </div>
+          )}
           {upErr && <p className="mt-2 text-sm text-destructive">{upErr}</p>}
           <div className="mt-3 text-xs text-muted-foreground">
             <p className="mb-1 font-semibold">Facturas PDF de prueba para adjuntar:</p>
