@@ -53,6 +53,15 @@ describe("reglas legales e internacionales", () => {
   it("pago internacional sin código SWIFT escala", () => {
     expect(failed({ ...br, bankAccount: "Itaú cuenta 0445-77881-2" })).toContain("intlRail");
   });
+  it("proveedor que prefiere COP: factura en USD convertida a TRM se paga", () => {
+    const us = { ...base, id: "us", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 950, currency: "USD" as const, category: "Servicios" };
+    expect(decide(run(us))).toBe("pagar");
+  });
+  it("tasa de cambio alterada escala (desvío > 2%)", () => {
+    const us = { ...base, id: "us2", vendorName: "BrightOps", nit: "EIN 47-2093815", bankAccount: "BofA routing 026009593 · 88901234", amount: 1_050, currency: "USD" as const, category: "Servicios" };
+    expect(failed(us)).toContain("fx");
+    expect(decide(run(us))).toBe("escalar");
+  });
   it("valida formatos de ID fiscal por país", () => {
     expect(taxIdMatches("NIT", "900123456-1")).toBe(true);
     expect(taxIdMatches("NIT", "123")).toBe(false);
