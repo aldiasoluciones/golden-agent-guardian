@@ -174,7 +174,7 @@ function Burst() {
   );
 }
 
-function Canales() {
+export function Canales() {
   const { invoices } = useAppState();
   const recent = invoices.filter((i) => i.channel === "whatsapp" || i.channel === "correo").slice(0, 8);
   return (

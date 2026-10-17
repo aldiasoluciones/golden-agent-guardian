@@ -35,9 +35,9 @@ const T = {
   es: {
     nav_treasury: "Validaciones",
     nav_analytics: "Analítica",
-    nav_inbox: "Bandeja de facturas",
+    nav_inbox: "Demo",
     nav_channels: "WhatsApp y Correo",
-    nav_policies: "Políticas",
+    nav_policies: "Administración",
     nav_audit: "Registro de auditoría",
     nav_api: "API REST",
     tagline: "Reto Blinka · pagos simulados",
@@ -63,9 +63,9 @@ const T = {
   en: {
     nav_treasury: "Reviews",
     nav_analytics: "Analytics",
-    nav_inbox: "Invoice inbox",
+    nav_inbox: "Demo",
     nav_channels: "WhatsApp & Email",
-    nav_policies: "Policies",
+    nav_policies: "Admin",
     nav_audit: "Audit log",
     nav_api: "REST API",
     tagline: "Blinka Challenge · simulated payments",

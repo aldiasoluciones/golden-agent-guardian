@@ -14,7 +14,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import aldiaMark from "../assets/aldia-mark.png";
 import blinkaLogo from "../assets/blinka-isotipo.svg";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setLang, t, useLang, type Lang, type TKey } from "../lib/i18n";
@@ -95,14 +94,11 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const NAV: { to: "/" | "/analitica" | "/bandeja" | "/canales" | "/politicas" | "/auditoria" | "/api-docs"; key: TKey }[] = [
+const NAV: { to: "/" | "/politicas" | "/auditoria" | "/demo"; key: TKey }[] = [
   { to: "/", key: "nav_treasury" },
-  { to: "/analitica", key: "nav_analytics" },
-  { to: "/bandeja", key: "nav_inbox" },
-  { to: "/canales", key: "nav_channels" },
   { to: "/politicas", key: "nav_policies" },
   { to: "/auditoria", key: "nav_audit" },
-  { to: "/api-docs", key: "nav_api" },
+  { to: "/demo", key: "nav_inbox" },
 ];
 
 function LangSwitch() {
@@ -152,7 +148,7 @@ function RootComponent() {
             <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
               <img src={blinkaLogo} alt="Isotipo Blinka" width={20} height={30} className="h-7 w-auto" />
               <span className="text-lg font-semibold tracking-tight">blinkagent</span>
-              <span className="flex items-center gap-1 border-l border-border pl-2 font-mono text-xs font-normal text-muted-foreground"><img src={aldiaMark} alt="AL DIA" width={14} height={14} className="h-3.5 w-3.5 rounded-sm" />by AL DIA</span>
+              <span className="border-l border-border pl-2 font-mono text-xs font-normal text-muted-foreground">by AL DIA</span>
             </Link>
             <nav className="flex flex-wrap gap-1 text-sm">
               {NAV.map((n) => (
