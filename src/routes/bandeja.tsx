@@ -33,10 +33,6 @@ export function Inbox() {
   const [sel, setSel] = useState<string | null>(null);
   const [live, setLive] = useState<{ id: string; checks: Check[]; reasoning: string; text: string; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [upErr, setUpErr] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const extract = useServerFn(extractInvoice);
 
   const start = async (id: string) => {
     setSel(id);
