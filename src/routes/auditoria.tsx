@@ -5,7 +5,11 @@ import type { Invoice } from "@/lib/types";
 import { Receipt } from "@/components/receipt";
 import { fmt, money } from "@/lib/rules";
 import { StatusBadge, inputCls } from "@/components/ui-bits";
-import { useAppState } from "@/lib/store";
+import { useAppState, useTenantId } from "@/lib/store";
+import { getTenants } from "@/lib/tenants";
+import { exportReconciliation } from "@/lib/reconciliation";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/auditoria")({
   head: () => ({
@@ -26,16 +30,19 @@ const COLORS: Record<string, string> = {
 };
 
 function AuditPage() {
-  const { audit, invoices } = useAppState();
+  const state = useAppState();
+  const { audit, invoices } = state;
+  const tenantId = useTenantId();
+  const company = getTenants().find((t) => t.id === tenantId)?.name ?? tenantId;
   const [open, setOpen] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const inv = invoices.find((i) => i.id === open);
-  const exportCsv = () => {
-    const rows = [["AL DIA · Blinka Agent — registro de decisiones"], ["fecha", "tipo", "monto", "mensaje"], ...audit.map((e) => [e.at, e.type, String(e.amount ?? ""), e.message.replace(/"/g, "'")])];
-    const blob = new Blob([rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n")], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "aldia-blinka-auditoria.csv";
-    a.click();
+  const exportExcel = async (filtered?: Invoice[]) => {
+    setExporting(true); setExportError("");
+    try { await exportReconciliation(state, company, filtered); }
+    catch { setExportError("No se pudo descargar el Excel. Intenta nuevamente."); }
+    finally { setExporting(false); }
   };
   return (
     <div className="space-y-6">
@@ -44,9 +51,10 @@ function AuditPage() {
           <h1 className="text-3xl font-bold tracking-tight">Registro de auditoría</h1>
           <p className="mt-1 text-muted-foreground">{audit.length} eventos registrados.</p>
         </div>
-        <button onClick={exportCsv} className="rounded-md border border-border px-4 py-2 text-sm">Exportar CSV</button>
+        <Button onClick={() => exportExcel()} disabled={exporting} variant="outline"><Download />{exporting ? "Generando Excel…" : "Descargar conciliación Excel"}</Button>
       </div>
-      <InvoiceDb invoices={invoices} onOpen={setOpen} />
+      {exportError && <p role="alert" className="text-destructive">{exportError}</p>}
+      <InvoiceDb invoices={invoices} onOpen={setOpen} onExport={exportExcel} exporting={exporting} />
       <Panel title="Bitácora de eventos">
         {audit.length === 0 && <p className="text-sm text-muted-foreground">Sin eventos todavía.</p>}
         <ul className="space-y-3">
@@ -83,22 +91,13 @@ const DEC: Record<string, (i: Invoice) => boolean> = {
   escalada: (i) => i.status === "retenida",
 };
 
-function InvoiceDb({ invoices, onOpen }: { invoices: Invoice[]; onOpen: (id: string) => void }) {
+function InvoiceDb({ invoices, onOpen, onExport, exporting }: { invoices: Invoice[]; onOpen: (id: string) => void; onExport: (rows: Invoice[]) => Promise<void>; exporting: boolean }) {
   const [ch, setCh] = useState("todos");
   const [dec, setDec] = useState("todas");
   const [q, setQ] = useState("");
   const [n, setN] = useState(50);
   const ql = q.toLowerCase();
-  const rows = invoices.filter((i) => (ch === "todos" || (i.channel ?? "manual") === ch) && DEC[dec]!(i) && (!ql || `${i.id} ${i.number} ${i.nit} ${i.vendorName} ${i.batchId ?? ""}`.toLowerCase().includes(ql)));
-  const exportCsv = () => {
-    const head = ["id", "numero", "canal", "remitente", "proveedor", "nit", "cuenta", "monto", "moneda", "estado", "prioridad", "cola", "lote", "ms_decision", "recibida", "comprobante", "hash", "porque"];
-    const data = rows.map((i) => [i.id, i.number, i.channel ?? "manual", i.sender ?? "", i.vendorName, i.nit, i.bankAccount, i.amount, i.currency, i.status, i.priority ?? "", i.queue ?? "", i.batchId ?? "", i.latencyMs ?? "", i.createdAt, i.receipt?.id ?? "", i.receipt?.hash ?? "", (i.decisionReason ?? "").replace(/"/g, "'")]);
-    const blob = new Blob([[head, ...data].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n")], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "aldia-base-facturas.csv";
-    a.click();
-  };
+  const rows = invoices.filter((i) => (ch === "todos" || (i.channel ?? "manual") === ch) && (DEC[dec]?.(i) ?? true) && (!ql || `${i.id} ${i.number} ${i.nit} ${i.vendorName} ${i.batchId ?? ""}`.toLowerCase().includes(ql)));
   const sel = "rounded-md border border-input bg-background px-2 py-2 text-sm";
   return (
     <Panel title={`Base de facturas · ${rows.length} de ${invoices.length}`}>
@@ -110,7 +109,7 @@ function InvoiceDb({ invoices, onOpen }: { invoices: Invoice[]; onOpen: (id: str
           <option value="todas">Todas las decisiones</option><option value="pagada">Pagadas</option><option value="frenada">Frenadas</option><option value="escalada">Escaladas</option>
         </select>
         <input className={`${inputCls} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar ID, número, NIT, lote…" />
-        <button onClick={exportCsv} className="rounded-md border border-border px-3 py-2 text-sm">Exportar base (CSV)</button>
+        <Button variant="outline" onClick={() => onExport(rows)} disabled={exporting}><Download />Exportar filtradas (Excel)</Button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">

@@ -1,164 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Panel, StatusBadge } from "@/components/ui-bits";
-import { runGoldenSet } from "@/lib/agent";
-import { t, useLang, type TKey } from "@/lib/i18n";
-import { fmt, invCOP, money, spentByCategory } from "@/lib/rules";
-import { store, useAppState } from "@/lib/store";
+import { ClipboardCheck, BarChart3, Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ReviewCase } from "@/components/review-case";
+import { useAppState, useTenantId } from "@/lib/store";
+import { getTenants } from "@/lib/tenants";
+import { pendingValidation } from "@/lib/treasury";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Blinka Agent by AL DIA — Agentes que pagan por la empresa" },
-      { name: "description", content: "Producto de AL DIA: un agente que paga facturas dentro de las reglas, frena lo indebido y escala a una persona lo que se sale de ellas." },
-      { property: "og:title", content: "Blinka Agent by AL DIA" },
-      { property: "og:description", content: "Pagó, frenó o escaló: cada decisión del agente explicada y auditada." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: Dashboard,
+  head: () => ({ meta: [
+    { title: "Validaciones pendientes — AL DIA · Blinka Agent" },
+    { name: "description", content: "Facturas de la empresa activa que requieren aprobación humana, con motivos y decisiones auditables." },
+    { property: "og:title", content: "Validaciones pendientes — AL DIA · Blinka Agent" },
+    { property: "og:description", content: "Revisa las excepciones del agente, autoriza o rechaza y mantén despejada tu bandeja." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
+  component: ReviewPage,
 });
 
-const STEPS: { n: string; tk: TKey; dk: TKey; to: "/politicas" | "/bandeja" | "/auditoria" }[] = [
-  { n: "01", tk: "step1_t", dk: "step1_d", to: "/politicas" },
-  { n: "02", tk: "step2_t", dk: "step2_d", to: "/bandeja" },
-  { n: "03", tk: "step3_t", dk: "step3_d", to: "/auditoria" },
-];
-
-function Dashboard() {
-  const { invoices, audit, policies } = useAppState();
-  const lang = useLang();
-  const [prog, setProg] = useState<{ done: number; total: number; label: string } | null>(null);
-  const running = !!prog && prog.done < prog.total;
-
-  const by = (...s: string[]) => invoices.filter((i) => s.includes(i.status));
-  const sum = (l: typeof invoices) => l.reduce((a, i) => a + invCOP(i, policies), 0);
-  const paid = by("pagada"), frozen = by("frenada"), escalated = by("retenida", "aprobada", "rechazada"), waiting = by("retenida");
-  const decided = [...paid, ...frozen, ...escalated];
-  const autonomy = decided.length ? Math.round(((paid.length + frozen.length) / decided.length) * 100) : 0;
-  // Security: any invoice paid without human approval while a rule failed would be a violation.
-  const violations = invoices.filter((i) => i.status === "pagada" && (i.checks ?? []).some((c) => !c.passed)).length;
-  const explained = decided.length ? Math.round((decided.filter((i) => i.decisionReason).length / decided.length) * 100) : 0;
-  const spent = spentByCategory(invoices, policies);
-
-  const runAll = async () => {
-    await runGoldenSet((done, total, label) => setProg({ done, total, label }));
-  };
-
-  const cols = [
-    { t: "Pagó", list: paid, cls: "text-primary", border: "border-primary" },
-    { t: "Frenó", list: frozen, cls: "text-destructive", border: "border-destructive" },
-    { t: "Escaló a una persona", list: escalated, cls: "text-warning", border: "border-warning" },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <section className="rounded-xl border border-border bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-primary">{t(lang, "hero_kicker")}</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{t(lang, "hero_title")}</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">{t(lang, "hero_sub")}</p>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {STEPS.map((s) => (
-            <Link key={s.n} to={s.to} className="rounded-lg border border-border p-4 hover:border-primary">
-              <span className="font-mono text-2xl font-bold text-primary">{s.n}</span>
-              <p className="mt-1 font-semibold">{t(lang, s.tk)}</p>
-              <p className="text-xs text-muted-foreground">{t(lang, s.dk)}</p>
-            </Link>
-          ))}
-        </div>
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <button onClick={runAll} disabled={running} className="rounded-md bg-primary px-5 py-2.5 font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60">
-            {running ? `${t(lang, "running")} ${prog!.done + 1}/${prog!.total}: ${prog!.label}…` : t(lang, "run_set")}
-          </button>
-          <Link to="/bandeja" className="rounded-md border border-border px-5 py-2.5 font-semibold hover:bg-secondary">{t(lang, "see_live")}</Link>
-          {invoices.length > 0 && !running && (
-            <button onClick={() => confirm("¿Reiniciar el demo? / Reset the demo?") && store.reset()} className="text-sm text-muted-foreground underline">{t(lang, "reset")}</button>
-          )}
-        </div>
-      </section>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Panel>
-          <p className="text-xs text-muted-foreground">{t(lang, "autonomy")}</p>
-          <p className="mt-2 font-mono text-3xl font-semibold text-primary">{autonomy}%</p>
-          <p className="mt-1 text-xs text-muted-foreground">{paid.length + frozen.length} de {decided.length} facturas decididas sin intervención humana</p>
-        </Panel>
-        <Panel>
-          <p className="text-xs text-muted-foreground">{t(lang, "security")}</p>
-          <p className={`mt-2 font-mono text-3xl font-semibold ${violations ? "text-destructive" : "text-primary"}`}>{violations}</p>
-          <p className="mt-1 text-xs text-muted-foreground">pagos fuera de reglas sin aprobación humana{violations ? "" : " · verificado"}</p>
-        </Panel>
-        <Panel>
-          <p className="text-xs text-muted-foreground">{t(lang, "explainability")}</p>
-          <p className="mt-2 font-mono text-3xl font-semibold text-primary">{explained}%</p>
-          <p className="mt-1 text-xs text-muted-foreground">de las decisiones tienen su porqué registrado</p>
-        </Panel>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ["Pagado por el agente", sum(paid), paid.length, "text-primary"],
-          ["Pagado con aprobación humana", sum(by("aprobada")), by("aprobada").length, "text-foreground"],
-          ["Retenido · espera aprobación", sum(waiting), waiting.length, "text-warning"],
-          ["Frenado o rechazado", sum([...frozen, ...by("rechazada")]), frozen.length + by("rechazada").length, "text-destructive"],
-        ].map(([l, v, n, c]) => (
-          <Panel key={l as string}>
-            <p className="text-xs text-muted-foreground">{l}</p>
-            <p className={`mt-2 font-mono text-xl font-semibold ${c}`}>{fmt(v as number)}</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">{n} factura(s)</p>
-          </Panel>
-        ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        {cols.map((c) => (
-          <Panel key={c.t} title={`${c.t} (${c.list.length})`}>
-            {c.list.length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-            <ul className="space-y-3">
-              {c.list.map((i) => (
-                <li key={i.id} className={`border-l-2 pl-3 text-sm ${c.border}`}>
-                  <div className="flex flex-wrap justify-between gap-2"><span className="font-semibold">{i.vendorName}</span><span className="font-mono text-xs">{money(i.amount, i.currency)}</span></div>
-                  <div className="my-1"><StatusBadge s={i.status} /></div>
-                  <p className="text-xs text-muted-foreground">{i.decisionReason}</p>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-        ))}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="Ejecución de presupuesto (COP)">
-          <div className="space-y-4">
-            {Object.entries(policies.budgets).map(([cat, b]) => {
-              const s = spent[cat] ?? 0;
-              const pct = Math.min(100, (s / b) * 100);
-              return (
-                <div key={cat}>
-                  <div className="flex justify-between text-sm"><span>{cat}</span><span className="font-mono text-xs text-muted-foreground">{fmt(s)} / {fmt(b)}</span></div>
-                  <div className="mt-1 h-2 rounded bg-muted"><div className={`h-2 rounded ${pct > 85 ? "bg-warning" : "bg-primary"}`} style={{ width: `${pct}%` }} /></div>
-                </div>
-              );
-            })}
-          </div>
-        </Panel>
-        <Panel title="Auditoría en tiempo real">
-          {audit.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin eventos aún. Corre el set completo para empezar.</p>
-          ) : (
-            <ul className="max-h-80 space-y-2 overflow-auto">
-              {audit.slice(0, 12).map((e) => (
-                <li key={e.id} className="border-l-2 border-border pl-3 text-sm">
-                  <span className="font-mono text-[11px] text-muted-foreground">{new Date(e.at).toLocaleTimeString("es-CO")} · {e.type}</span>
-                  <p>{e.message}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link to="/auditoria" className="mt-3 inline-block text-sm text-primary">Ver registro completo →</Link>
-        </Panel>
-      </div>
-    </div>
-  );
+function ReviewPage() {
+  const { invoices } = useAppState();
+  const tenantId = useTenantId();
+  const company = getTenants().find((t) => t.id === tenantId);
+  const pending = pendingValidation(invoices).sort((a, b) => Number(b.priority === "alta") - Number(a.priority === "alta") || a.dueDate.localeCompare(b.dueDate));
+  return <div className="space-y-6">
+    <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
+      <div><p className="mb-2 text-xs font-mono uppercase text-primary">AL DIA · {company?.name}</p><h1 className="text-3xl font-bold">Validaciones pendientes</h1><p className="mt-2 text-sm text-muted-foreground">{pending.length} facturas requieren tu decisión</p></div>
+      <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/bandeja"><Inbox />Bandeja</Link></Button><Button asChild variant="secondary"><Link to="/analitica"><BarChart3 />Analítica</Link></Button></div>
+    </header>
+    {pending.length ? <div>{pending.map((invoice) => <ReviewCase key={`${tenantId}:${invoice.id}`} invoice={invoice} />)}</div> : <div className="flex flex-col items-center py-20 text-center"><ClipboardCheck className="mb-4 h-10 w-10 text-primary" /><h2 className="text-xl font-semibold">Todo al día</h2><p className="mt-2 text-sm text-muted-foreground">No hay facturas pendientes de validación humana.</p></div>}
+  </div>;
 }
