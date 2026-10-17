@@ -66,7 +66,7 @@ export function policiesFor(id: string, base: Policies): Policies {
     usdRate: round(3_850 + r() * 300, 10),
     agreedTolerance: Math.round((t.profile === "Conservador" ? 2 : 3) + r() * 6),
     fxTolerance: Math.round((1 + r() * 4) * 10) / 10,
-    anomalyMultiplier: Math.round((t.profile === "Ágil" ? 2.5 : 1.5) + r() * 1.5 * 10) / 10,
+    anomalyMultiplier: Math.round(((t.profile === "Ágil" ? 2.5 : 1.5) + r() * 1.5) * 10) / 10,
     requireBankMatch: true,
     blockDuplicates: true,
     requireLegalDoc: t.profile !== "Ágil" || r() > 0.5,
