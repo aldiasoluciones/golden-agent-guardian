@@ -15,7 +15,7 @@ export const JURY_CASES: { label: string; expect: Expect; file?: string; preset?
   { label: "Factura válida (francés)", expect: "pagar", file: "FACTURE_PA-9410_ORIGINALE.pdf" },
   { label: "Cobro duplicado (francés)", expect: "frenar", file: "FACTURE_PA-9410_DUPLICATA.pdf" },
   { label: "Proveedor fuera de lista blanca (alemán)", expect: "frenar", file: "RECHNUNG_BER-2026-884.pdf" },
-  { label: "Cuenta bancaria cambiada (portugués)", expect: "escalar", file: "FATURA_PA-BR-7714.pdf" },
+  { label: "Cuenta bancaria cambiada", expect: "escalar", preset: "cuenta" },
   { label: "Supera límite de auto-pago (inglés)", expect: "escalar", file: "INVOICE_TL-5590.pdf" },
   { label: "Sin empresa pagadora (español)", expect: "frenar", file: "FACTURA_SIN-PAGADOR_SP-3301.pdf" },
   { label: "Empresa pagadora ajena (inglés)", expect: "frenar", file: "INVOICE_EMPRESA-AJENA_EX-7720.pdf" },
