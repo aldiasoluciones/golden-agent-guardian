@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnaliticaRouteImport } from './routes/analitica'
 import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
@@ -18,14 +17,10 @@ import { Route as CanalesRouteImport } from './routes/canales'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as PoliticasRouteImport } from './routes/politicas'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as ValidacionesRouteImport } from './routes/validaciones'
 import { Route as ApiAuditRouteImport } from './routes/api/audit'
 import { Route as ApiPublicV1DecideRouteImport } from './routes/api/public/v1/decide'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AnaliticaRoute = AnaliticaRouteImport.update({
   id: '/analitica',
   path: '/analitica',
@@ -66,6 +61,11 @@ const PrivacidadRoute = PrivacidadRouteImport.update({
   path: '/privacidad',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ValidacionesRoute = ValidacionesRouteImport.update({
+  id: '/validaciones',
+  path: '/validaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuditRoute = ApiAuditRouteImport.update({
   id: '/api/audit',
   path: '/api/audit',
@@ -78,7 +78,6 @@ const ApiPublicV1DecideRoute = ApiPublicV1DecideRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/analitica': typeof AnaliticaRoute
   '/api-docs': typeof ApiDocsRoute
   '/auditoria': typeof AuditoriaRoute
@@ -87,11 +86,11 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
+  '/validaciones': typeof ValidacionesRoute
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/analitica': typeof AnaliticaRoute
   '/api-docs': typeof ApiDocsRoute
   '/auditoria': typeof AuditoriaRoute
@@ -100,12 +99,12 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
+  '/validaciones': typeof ValidacionesRoute
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/analitica': typeof AnaliticaRoute
   '/api-docs': typeof ApiDocsRoute
   '/auditoria': typeof AuditoriaRoute
@@ -114,13 +113,13 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
+  '/validaciones': typeof ValidacionesRoute
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/analitica'
     | '/api-docs'
     | '/auditoria'
@@ -129,11 +128,11 @@ export interface FileRouteTypes {
     | '/demo'
     | '/politicas'
     | '/privacidad'
+    | '/validaciones'
     | '/api/audit'
     | '/api/public/v1/decide'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/analitica'
     | '/api-docs'
     | '/auditoria'
@@ -142,11 +141,11 @@ export interface FileRouteTypes {
     | '/demo'
     | '/politicas'
     | '/privacidad'
+    | '/validaciones'
     | '/api/audit'
     | '/api/public/v1/decide'
   id:
     | '__root__'
-    | '/'
     | '/analitica'
     | '/api-docs'
     | '/auditoria'
@@ -155,12 +154,12 @@ export interface FileRouteTypes {
     | '/demo'
     | '/politicas'
     | '/privacidad'
+    | '/validaciones'
     | '/api/audit'
     | '/api/public/v1/decide'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AnaliticaRoute: typeof AnaliticaRoute
   ApiDocsRoute: typeof ApiDocsRoute
   AuditoriaRoute: typeof AuditoriaRoute
@@ -169,19 +168,13 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   PoliticasRoute: typeof PoliticasRoute
   PrivacidadRoute: typeof PrivacidadRoute
+  ValidacionesRoute: typeof ValidacionesRoute
   ApiAuditRoute: typeof ApiAuditRoute
   ApiPublicV1DecideRoute: typeof ApiPublicV1DecideRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/analitica': {
       id: '/analitica'
       path: '/analitica'
@@ -238,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacidadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/validaciones': {
+      id: '/validaciones'
+      path: '/validaciones'
+      fullPath: '/validaciones'
+      preLoaderRoute: typeof ValidacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/audit': {
       id: '/api/audit'
       path: '/api/audit'
@@ -256,7 +256,6 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AnaliticaRoute: AnaliticaRoute,
   ApiDocsRoute: ApiDocsRoute,
   AuditoriaRoute: AuditoriaRoute,
@@ -265,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   PoliticasRoute: PoliticasRoute,
   PrivacidadRoute: PrivacidadRoute,
+  ValidacionesRoute: ValidacionesRoute,
   ApiAuditRoute: ApiAuditRoute,
   ApiPublicV1DecideRoute: ApiPublicV1DecideRoute,
 }
