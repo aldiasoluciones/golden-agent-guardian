@@ -6,6 +6,7 @@ import { DemoUpload } from "@/components/demo-upload";
 import { ShellAttack } from "@/components/shell-attack";
 import { InboundWebhook } from "@/components/inbound-webhook";
 import { BlinkaConnect } from "@/components/blinka-connect";
+import { QuickBooksWebhook, StripeWebhook } from "@/components/provider-webhooks";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({ meta: [
@@ -39,6 +40,7 @@ function Demo() {
       <div className="grid gap-6 lg:grid-cols-2"><Correo /><WhatsApp /></div>
       <DemoUpload />
       <Burst />
+      <QuickBooksWebhook />
       <InboundWebhook />
       <ApiDocs embedded />
     </Step>
@@ -47,6 +49,7 @@ function Demo() {
     </Step>
     <Step id="salida" n={3} title="Salida · Orden hacia Blinka" text="Solo las facturas aprobadas generan orden de dispersión firmada, con su riel asignado.">
       <BlinkaConnect />
+      <StripeWebhook />
     </Step>
   </div>;
 }
