@@ -1,5 +1,6 @@
 import { getTenants, flag } from "@/lib/tenants";
 import { GuidedTour } from "@/components/guided-tour";
+import { SiteTranslator } from "@/components/site-translator";
 import { CookieBanner, openCookiePrefs } from "@/components/cookie-banner";
 import { setTenant, useTenantId } from "@/lib/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -142,6 +144,7 @@ function TenantSwitch() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const lang = useLang();
+  const isHome = useLocation({ select: (l) => l.pathname === "/" });
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
@@ -166,7 +169,7 @@ function RootComponent() {
               ))}
             </nav>
             <span className="ml-auto hidden font-mono text-xs text-muted-foreground md:inline">{t(lang, "tagline")}</span>
-            <TenantSwitch />
+            {!isHome && <TenantSwitch />}
             <LangSwitch />
           </div>
         </header>
@@ -182,6 +185,7 @@ function RootComponent() {
           </div>
         </footer>
         <GuidedTour />
+        <SiteTranslator />
         <CookieBanner />
       </div>
     </QueryClientProvider>

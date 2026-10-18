@@ -3,11 +3,12 @@ import { useState } from "react";
 
 type Path = "/" | "/demo" | "/validaciones" | "/auditoria" | "/politicas";
 const STEPS: { to: Path; title: string; text: string }[] = [
-  { to: "/", title: "1. Inicio y sellos", text: "Mira los 3 pilares y abre «Ver respaldo técnico» en un sello para ver qué está protegido." },
-  { to: "/demo", title: "2. Demo: lote Jurados", text: "Pulsa «Correr lote jurados». Verás 10 casos típicos: el motor paga, frena o escala cada uno según las reglas." },
-  { to: "/validaciones", title: "3. Validaciones", text: "Aquí quedan solo los casos que necesitan una persona. Aprueba o rechaza uno escribiendo el motivo." },
-  { to: "/auditoria", title: "4. Registro de auditoría", text: "Cada decisión tiene su explicación, fecha y responsable. Descarga el cruce de cuentas en Excel." },
-  { to: "/politicas", title: "5. Administración", text: "Cambia límites y proveedores autorizados. En «Conexión Blinka» prueba la conexión y descarga la orden de pago." },
+  { to: "/", title: "1. Inicio", text: "Lee los 4 pilares, las defensas contra ataques y abre «Ver respaldo técnico» en un sello." },
+  { to: "/demo", title: "2. Prueba real para jurados", text: "Elige la entrada (correo, WhatsApp, archivos o API) y corre los ejercicios: 10 facturas típicas, lote de 100, 300 facturas y ataque masivo." },
+  { to: "/demo", title: "3. Salida a Stripe y QuickBooks", text: "Mira cómo las facturas aprobadas generan la orden de pago y el registro contable. Al final están las conexiones listas para pegar." },
+  { to: "/validaciones", title: "4. Validaciones", text: "Solo quedan los casos que necesitan una persona. Si hay alertas, ábrelas con «Ver detalles» y «Marcar como revisado» para retirar el aviso. Usa «Refrescar ahora» para traer facturas nuevas." },
+  { to: "/auditoria", title: "5. Registro de auditoría", text: "Cada decisión tiene motivo, fecha y responsable. Descarga el cruce de cuentas y los informes preventivos en Excel." },
+  { to: "/politicas", title: "6. Administración", text: "Cambia límites, proveedores autorizados y la empresa activa para ver reglas distintas." },
 ];
 
 export function GuidedTour() {
