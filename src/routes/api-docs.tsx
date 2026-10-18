@@ -66,7 +66,7 @@ export function ApiDocs({ embedded = false }: { embedded?: boolean }) {
   const decision = res && (() => { try { return JSON.parse(res.text).decision as string; } catch { return null; } })();
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6 [&_section]:min-w-0">
       {!embedded && <div>
         <h1 className="text-2xl font-bold">API REST para jurados</h1>
         <p className="text-sm text-muted-foreground">
@@ -89,7 +89,7 @@ export function ApiDocs({ embedded = false }: { embedded?: boolean }) {
         <Panel title="Probador en vivo">
           <div className="mb-3 flex flex-wrap gap-2">
             {Object.entries(PRESETS).map(([k, p]) => (
-              <Button key={k} onClick={() => setBody(JSON.stringify(p.body, null, 2))} className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted">
+              <Button variant="outline" size="sm" key={k} onClick={() => setBody(JSON.stringify(p.body, null, 2))} className="h-auto min-h-8 max-w-full whitespace-normal text-left">
                 {p.label}
               </Button>
             ))}
@@ -121,13 +121,13 @@ export function ApiDocs({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       <Panel title="Copiar y pegar">
-        <div className="mb-2 flex gap-2">
+        <div className="mb-2 flex flex-wrap gap-2">
           {(["curl", "js", "py"] as const).map((l) => (
-            <Button key={l} onClick={() => setLang(l)} className={`rounded-md px-3 py-1 text-xs ${lang === l ? "bg-primary text-primary-foreground" : "border border-border"}`}>
+            <Button size="sm" variant={lang === l ? "default" : "outline"} key={l} onClick={() => setLang(l)}>
               {l === "curl" ? "curl" : l === "js" ? "JavaScript" : "Python"}
             </Button>
           ))}
-          <Button onClick={() => navigator.clipboard.writeText(snippet)} className="ml-auto rounded-md border border-border px-3 py-1 text-xs">Copiar</Button>
+          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(snippet)} className="ml-auto">Copiar</Button>
         </div>
         <pre className="overflow-auto rounded bg-muted p-3 text-xs">{snippet}</pre>
       </Panel>
