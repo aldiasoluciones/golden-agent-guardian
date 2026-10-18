@@ -16,6 +16,7 @@ import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as BandejaRouteImport } from './routes/bandeja'
 import { Route as CanalesRouteImport } from './routes/canales'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as IntegracionesRouteImport } from './routes/integraciones'
 import { Route as PoliticasRouteImport } from './routes/politicas'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as ValidacionesRouteImport } from './routes/validaciones'
@@ -57,6 +58,11 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntegracionesRoute = IntegracionesRouteImport.update({
+  id: '/integraciones',
+  path: '/integraciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PoliticasRoute = PoliticasRouteImport.update({
   id: '/politicas',
   path: '/politicas',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/bandeja': typeof BandejaRoute
   '/canales': typeof CanalesRoute
   '/demo': typeof DemoRoute
+  '/integraciones': typeof IntegracionesRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
   '/validaciones': typeof ValidacionesRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/bandeja': typeof BandejaRoute
   '/canales': typeof CanalesRoute
   '/demo': typeof DemoRoute
+  '/integraciones': typeof IntegracionesRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
   '/validaciones': typeof ValidacionesRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/bandeja': typeof BandejaRoute
   '/canales': typeof CanalesRoute
   '/demo': typeof DemoRoute
+  '/integraciones': typeof IntegracionesRoute
   '/politicas': typeof PoliticasRoute
   '/privacidad': typeof PrivacidadRoute
   '/validaciones': typeof ValidacionesRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/bandeja'
     | '/canales'
     | '/demo'
+    | '/integraciones'
     | '/politicas'
     | '/privacidad'
     | '/validaciones'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/bandeja'
     | '/canales'
     | '/demo'
+    | '/integraciones'
     | '/politicas'
     | '/privacidad'
     | '/validaciones'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/bandeja'
     | '/canales'
     | '/demo'
+    | '/integraciones'
     | '/politicas'
     | '/privacidad'
     | '/validaciones'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   BandejaRoute: typeof BandejaRoute
   CanalesRoute: typeof CanalesRoute
   DemoRoute: typeof DemoRoute
+  IntegracionesRoute: typeof IntegracionesRoute
   PoliticasRoute: typeof PoliticasRoute
   PrivacidadRoute: typeof PrivacidadRoute
   ValidacionesRoute: typeof ValidacionesRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/integraciones': {
+      id: '/integraciones'
+      path: '/integraciones'
+      fullPath: '/integraciones'
+      preLoaderRoute: typeof IntegracionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/politicas': {
       id: '/politicas'
       path: '/politicas'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   BandejaRoute: BandejaRoute,
   CanalesRoute: CanalesRoute,
   DemoRoute: DemoRoute,
+  IntegracionesRoute: IntegracionesRoute,
   PoliticasRoute: PoliticasRoute,
   PrivacidadRoute: PrivacidadRoute,
   ValidacionesRoute: ValidacionesRoute,
