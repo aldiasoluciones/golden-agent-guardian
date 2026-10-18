@@ -23,6 +23,8 @@ import { Route as ValidacionesRouteImport } from './routes/validaciones'
 import { Route as ApiAuditRouteImport } from './routes/api/audit'
 import { Route as ApiPublicV1DecideRouteImport } from './routes/api/public/v1/decide'
 import { Route as ApiPublicV1InboundRouteImport } from './routes/api/public/v1/inbound'
+import { Route as ApiPublicV1QuickbooksRouteImport } from './routes/api/public/v1/quickbooks'
+import { Route as ApiPublicV1StripeRouteImport } from './routes/api/public/v1/stripe'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +96,16 @@ const ApiPublicV1InboundRoute = ApiPublicV1InboundRouteImport.update({
   path: '/api/public/v1/inbound',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1QuickbooksRoute = ApiPublicV1QuickbooksRouteImport.update({
+  id: '/api/public/v1/quickbooks',
+  path: '/api/public/v1/quickbooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1StripeRoute = ApiPublicV1StripeRouteImport.update({
+  id: '/api/public/v1/stripe',
+  path: '/api/public/v1/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +122,8 @@ export interface FileRoutesByFullPath {
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
   '/api/public/v1/inbound': typeof ApiPublicV1InboundRoute
+  '/api/public/v1/quickbooks': typeof ApiPublicV1QuickbooksRoute
+  '/api/public/v1/stripe': typeof ApiPublicV1StripeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +140,8 @@ export interface FileRoutesByTo {
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
   '/api/public/v1/inbound': typeof ApiPublicV1InboundRoute
+  '/api/public/v1/quickbooks': typeof ApiPublicV1QuickbooksRoute
+  '/api/public/v1/stripe': typeof ApiPublicV1StripeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +159,8 @@ export interface FileRoutesById {
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
   '/api/public/v1/inbound': typeof ApiPublicV1InboundRoute
+  '/api/public/v1/quickbooks': typeof ApiPublicV1QuickbooksRoute
+  '/api/public/v1/stripe': typeof ApiPublicV1StripeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +179,8 @@ export interface FileRouteTypes {
     | '/api/audit'
     | '/api/public/v1/decide'
     | '/api/public/v1/inbound'
+    | '/api/public/v1/quickbooks'
+    | '/api/public/v1/stripe'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +197,8 @@ export interface FileRouteTypes {
     | '/api/audit'
     | '/api/public/v1/decide'
     | '/api/public/v1/inbound'
+    | '/api/public/v1/quickbooks'
+    | '/api/public/v1/stripe'
   id:
     | '__root__'
     | '/'
@@ -193,6 +215,8 @@ export interface FileRouteTypes {
     | '/api/audit'
     | '/api/public/v1/decide'
     | '/api/public/v1/inbound'
+    | '/api/public/v1/quickbooks'
+    | '/api/public/v1/stripe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +234,8 @@ export interface RootRouteChildren {
   ApiAuditRoute: typeof ApiAuditRoute
   ApiPublicV1DecideRoute: typeof ApiPublicV1DecideRoute
   ApiPublicV1InboundRoute: typeof ApiPublicV1InboundRoute
+  ApiPublicV1QuickbooksRoute: typeof ApiPublicV1QuickbooksRoute
+  ApiPublicV1StripeRoute: typeof ApiPublicV1StripeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +338,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1InboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/quickbooks': {
+      id: '/api/public/v1/quickbooks'
+      path: '/api/public/v1/quickbooks'
+      fullPath: '/api/public/v1/quickbooks'
+      preLoaderRoute: typeof ApiPublicV1QuickbooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/stripe': {
+      id: '/api/public/v1/stripe'
+      path: '/api/public/v1/stripe'
+      fullPath: '/api/public/v1/stripe'
+      preLoaderRoute: typeof ApiPublicV1StripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +370,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuditRoute: ApiAuditRoute,
   ApiPublicV1DecideRoute: ApiPublicV1DecideRoute,
   ApiPublicV1InboundRoute: ApiPublicV1InboundRoute,
+  ApiPublicV1QuickbooksRoute: ApiPublicV1QuickbooksRoute,
+  ApiPublicV1StripeRoute: ApiPublicV1StripeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
