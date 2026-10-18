@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/v1/inbound")({
         const t0 = Date.now();
         const raw = await request.text();
         if (raw.length > 100_000) return Response.json({ ok: false, error: "Cuerpo demasiado grande" }, { status: 413, headers: CORS });
-        const secret = process.env.INBOUND_WEBHOOK_SECRET || "sandbox";
+        const secret = process.env["INBOUND_WEBHOOK_SECRET"] || "sandbox";
         const given = (request.headers.get("x-blinkagent-signature") || "").replace(/^sha256=/, "");
         if (!given || !safeEqual(given, await hmac(secret, raw)))
           return Response.json({ ok: false, error: "Firma inválida o ausente" }, { status: 401, headers: CORS });
