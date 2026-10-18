@@ -6,7 +6,7 @@ export type { Rail };
 /** Pick the Blinka rail from the vendor's country and payout currency; simulated order only, never moves money. */
 export function railFor(inv: Invoice, p: Policies): Rail {
   const v = p.vendors.find((x) => x.nit === inv.nit);
-  return corridor(v?.country, v?.payoutCurrency ?? v?.currency ?? inv.currency, inv.bankAccount, v?.payMethod)?.rail ?? "SWIFT";
+  return corridor(v?.country, v?.currency ?? inv.currency, inv.bankAccount, v?.payMethod)?.rail ?? "SWIFT";
 }
 
 /** Only rule-approved invoices become dispersal orders; each carries the QuickBooks bill-payment sync back. */

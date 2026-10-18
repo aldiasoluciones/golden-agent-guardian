@@ -27,7 +27,7 @@ export async function signStripe(secret: string, body: string, t = Math.floor(Da
 export async function verifyStripe(secret: string, body: string, header: string | null, now = Math.floor(Date.now() / 1000)) {
   if (!header) return false;
   const parts = Object.fromEntries(header.split(",").map((p) => p.split("=") as [string, string]));
-  const t = Number(parts.t);
-  if (!Number.isFinite(t) || Math.abs(now - t) > STRIPE_TOLERANCE_S || !parts.v1) return false;
-  return safeEqual(parts.v1, hex(await hmacBytes(secret, `${t}.${body}`)));
+  const t = Number(parts["t"]);
+  if (!Number.isFinite(t) || Math.abs(now - t) > STRIPE_TOLERANCE_S || !parts["v1"]) return false;
+  return safeEqual(parts["v1"], hex(await hmacBytes(secret, `${t}.${body}`)));
 }
