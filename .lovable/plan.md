@@ -1,24 +1,28 @@
-# Botón «Ejecución completa en vivo» en Demo
+# Webhooks de QuickBooks y Stripe
 
-Un solo botón arriba de Demo que recorre todo el circuito sin copiar nada ni cambiar de pestaña.
+## Objetivo
+Dos endpoints públicos nuevos con firma verificada al estilo oficial de cada proveedor, conectados en el flujo:
 
-## Qué verá el usuario
-Un panel con 4 pasos que se encienden uno tras otro (con check verde al terminar):
+```text
+QuickBooks (Bill creado) --webhook--> blinkagent (reglas) --orden--> Blinka/Stripe (payout)
+Stripe (payout.paid / payout.failed) --webhook--> blinkagent --> registro BillPayment para QuickBooks
+```
 
-1. **Entrada** — corre el lote Jurados (10 casos típicos) por el mismo motor de siempre.
-2. **Decisión** — muestra el resumen: cuántas pagadas, frenadas y escaladas, con el motivo de cada una.
-3. **Webhook de entrada** — envía una factura firmada como lo haría un ERP y muestra la respuesta (PAGAR) y el rechazo de una firma falsa (401).
-4. **Salida** — genera un webhook de prueba automáticamente y envía solo las órdenes aprobadas; muestra HTTP 200, tiempo y enlace «Ver entregas en webhook.site».
+## Qué se construye
+1. **Webhook de entrada QuickBooks** — `POST /api/public/v1/quickbooks`
+   - Verifica la cabecera `intuit-signature` (HMAC-SHA256 en base64 del cuerpo con el "verifier token").
+   - Acepta el formato de notificación de Intuit (`eventNotifications[].dataChangeEvent.entities` con `name: "Bill"`) y también un Bill completo de demo (proveedor, monto, moneda, cuenta).
+   - Pasa el Bill por el motor determinista y responde PAGAR / FRENAR / ESCALAR con su motivo. Firma falsa → 401.
+2. **Webhook de confirmación Stripe** — `POST /api/public/v1/stripe`
+   - Verifica `Stripe-Signature` (`t=…,v1=…`, HMAC-SHA256 de `t.cuerpo`, tolerancia de 5 min).
+   - Eventos `payout.paid`, `payout.failed`, `transfer.created`. Si es pagado, devuelve el registro `BillPayment` listo para QuickBooks con la huella SHA-256; si falla, lo marca para revisión humana.
+3. **Panel en Demo** (paso 1 Entrada y paso 3 Salida): botones "QuickBooks: Bill válido", "QuickBooks: proveedor fuera de lista", "Firma falsa", y en salida "Stripe: payout pagado", "Stripe: payout fallido", con registro de respuestas.
+4. Pruebas automáticas: firma válida acepta, firma falsa da 401, Stripe con marca de tiempo vieja da 401, Bill de proveedor no autorizado da FRENAR.
 
-Al final: tarjeta de resultado con capital protegido, enlaces directos a «Revisar en Validaciones» (casos escalados) y «Descargar conciliación Excel».
+## Alcance honesto
+- Funciona con claves sandbox ("sandbox") por defecto. Para recibir eventos reales se guardan dos claves secretas: `QUICKBOOKS_VERIFIER_TOKEN` y `STRIPE_WEBHOOK_SECRET`, y se registra la URL pública en el portal de desarrolladores de Intuit y en Stripe → Webhooks.
+- No mueve dinero ni escribe en QuickBooks: devuelve el registro de pago para que la integración real lo publique.
 
-## Reglas que se mantienen
-- El motor determinista sigue siendo la única autoridad; nada frenado o escalado sale.
-- Todo simulado: no se mueve dinero; producción sigue bloqueada.
-- Repetible: usa la limpieza automática del lote Jurados, siempre 10/10.
-- Si falla webhook.site, el paso 4 lo dice claramente y el resto del flujo queda válido.
-
-## Detalle técnico
-- Nuevo componente `src/components/live-run.tsx`, montado al inicio de `src/routes/demo.tsx`.
-- Reutiliza `runJurySession` (store), `createTestWebhook` y `sendDispersalWebhook` (webhook.functions), `dispersalOrders` (blinka-connect) y la firma HMAC del webhook de entrada (extraer `sign` a un helper compartido).
-- Sin cambios en `rules.ts` ni en endpoints. Verificación con Playwright en móvil y escritorio; tests existentes en verde.
+## Detalles técnicos
+- Archivos: `src/routes/api/public/v1/quickbooks.ts`, `src/routes/api/public/v1/stripe.ts`, utilidades de firma puras en `src/lib/provider-signatures.ts` (+ test), panel `src/components/provider-webhooks.tsx` montado en `src/routes/demo.tsx`.
+- Reutiliza `decideApi` y validación Zod; lectura de secretos dentro del handler; comparación en tiempo constante; límite de 100 KB.
