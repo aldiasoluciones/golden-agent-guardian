@@ -1,79 +1,78 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Clipboard, Check, FileUp, Mail, Terminal } from "lucide-react";
+import { Download, FileUp, Mail, MessageCircle, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Burst, Correo, WhatsApp } from "@/routes/canales";
+import { DemoUpload, JURY_CASES } from "@/components/demo-upload";
+import { ShellAttack } from "@/components/shell-attack";
+import { InboundWebhook } from "@/components/inbound-webhook";
+import { BlinkaConnect } from "@/components/blinka-connect";
+import { QuickBooksWebhook, StripeWebhook } from "@/components/provider-webhooks";
 
-const cases = {
-  valid: { label: "Factura válida", vendorName: "Papelería Andina S.A.S", vendorTaxId: "900123456-1", bankAccount: "Bancolombia 123-456789-01" },
-  blocked: { label: "Proveedor fuera de lista", vendorName: "Fantasma Ltda", vendorTaxId: "999000111-2", bankAccount: "Nequi 300-0000000" },
-};
+const CHANNELS = [
+  { key: "correo", label: "Correo", icon: Mail },
+  { key: "whatsapp", label: "WhatsApp", icon: MessageCircle },
+  { key: "archivo", label: "Archivo / PDF", icon: FileUp },
+  { key: "api", label: "API / Webhook", icon: Terminal },
+] as const;
+type Ch = (typeof CHANNELS)[number]["key"];
+
+function Step({ n, title, text, children }: { n: number; title: string; text: string; children: ReactNode }) {
+  return <section className="relative space-y-4 border-l-2 border-primary/30 pl-5 sm:pl-8">
+    <span className="absolute -left-[15px] top-0 flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{n}</span>
+    <div><h3 className="text-lg font-semibold">{title}</h3><p className="mt-1 text-sm text-muted-foreground">{text}</p></div>
+    {children}
+  </section>;
+}
 
 export function RealTestGuide() {
-  const [selected, setSelected] = useState<keyof typeof cases>("valid");
-  const [copied, setCopied] = useState(false);
-  const [copyError, setCopyError] = useState("");
-  const payload = JSON.stringify({ event: "invoice.created", invoice: {
-    number: "REAL-TEST-1001", vendorName: cases[selected].vendorName,
-    vendorTaxId: cases[selected].vendorTaxId, bankAccount: cases[selected].bankAccount,
-    amount: 1_200_000, currency: "COP", category: "Suministros", payer: { name: "AL DIA Demo S.A.S" },
-  } });
-  const command = `body='${payload}'
-signature=$(printf '%s' "$body" | openssl dgst -sha256 -hmac 'sandbox' | awk '{print $NF}')
-curl -i 'https://blinkagent.lovable.app/api/public/v1/inbound' \\
-  -H 'Content-Type: application/json' \\
-  -H "X-Blinkagent-Signature: sha256=$signature" \\
-  --data-raw "$body"`;
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      setCopyError("");
-    } catch {
-      setCopyError("No se pudo copiar. Selecciona el comando y cópialo manualmente.");
-    }
-  };
-
-  return <section aria-label="Prueba real para jurados" className="space-y-4 border-y border-border py-6">
+  const [ch, setCh] = useState<Ch>("correo");
+  const label = CHANNELS.find((c) => c.key === ch)!.label;
+  const pdfs = JURY_CASES.filter((c) => c.file);
+  return <section aria-label="Prueba real para jurados" className="space-y-8">
     <div>
-      <h2 className="text-xl font-semibold">Prueba real para jurados</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Usa una factura propia o envía una solicitud al servicio publicado. La lectura y las reglas se ejecutan; los pagos y registros contables siguen siendo simulados.</p>
+      <h2 className="text-2xl font-semibold">Prueba real para jurados</h2>
+      <p className="mt-1 text-sm text-muted-foreground">De principio a fin: elige la entrada, corre los 4 ejercicios, revisa las decisiones y mira la salida a Stripe y QuickBooks. El motor de reglas decide; no se mueve dinero real.</p>
     </div>
-    <details className="group border-b border-border pb-4" open>
-      <summary className="flex cursor-pointer items-center gap-2 font-semibold"><FileUp className="size-4 shrink-0 text-primary" />1 · Subir una factura propia</summary>
-      <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-        <li>Selecciona arriba la empresa destinataria. La factura debe identificar al pagador y contener proveedor, identificación fiscal, cuenta, monto y moneda.</li>
-        <li>Abre la carga de archivos y adjunta tu PDF, imagen, XML o texto. Usa un archivo de hasta 4,5 MB. La extracción puede necesitar saldo de IA.</li>
-        <li>Comprueba la empresa detectada y el motivo de la decisión. Un proveedor no autorizado se frena; una cuenta cambiada requiere revisión.</li>
-        <li>Consulta los casos pendientes en Validaciones y el historial en Registro de auditoría. Los datos de esta prueba quedan en este navegador, separados por empresa.</li>
-      </ol>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm"><a href="#factura-propia"><FileUp />Adjuntar factura</a></Button>
-        <Button asChild variant="ghost" size="sm"><Link to="/validaciones">Ver validaciones</Link></Button>
-        <Button asChild variant="ghost" size="sm"><Link to="/auditoria">Ver auditoría</Link></Button>
+
+    <Step n={1} title="Elige la forma de entrada" text="La factura llega por correo, WhatsApp, archivo o directamente por API firmada.">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Forma de entrada">
+        {CHANNELS.map((c) => <Button key={c.key} size="sm" variant={ch === c.key ? "default" : "outline"} aria-pressed={ch === c.key} onClick={() => setCh(c.key)}><c.icon />{c.label}</Button>)}
       </div>
-    </details>
-    <details className="border-b border-border pb-4">
-      <summary className="flex cursor-pointer items-center gap-2 font-semibold"><Mail className="size-4 shrink-0 text-primary" />2 · Enviar desde correo o WhatsApp</summary>
-      <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-        <li>Correo: conecta tu buzón en Make o Zapier y configura la recepción de mensajes con adjuntos. WhatsApp: conecta un número de WhatsApp Business mediante un proveedor autorizado.</li>
-        <li>Descarga el adjunto y extrae sus datos en el servicio puente. El webhook recibe JSON estructurado, no el PDF ni el mensaje directamente.</li>
-        <li>Envía un POST al endpoint del paso 3. Firma el cuerpo exacto con HMAC-SHA256 y envía la cabecera X-Blinkagent-Signature: sha256=&lt;firma&gt;. Escribir solamente «sandbox» no es una firma válida.</li>
-        <li>Envía una factura desde tu correo o teléfono y verifica la respuesta en el historial de Make, Zapier o tu proveedor de WhatsApp.</li>
-      </ol>
-      <p className="mt-3 text-sm text-muted-foreground">Conexión externa pendiente de configurar: los botones Correo y WhatsApp de esta Demo son simuladores. El webhook actual devuelve una decisión, pero no guarda la factura ni activa alertas en esta pantalla. Para eso falta conectar el almacenamiento y las notificaciones.</p>
-    </details>
-    <details>
-      <summary className="flex cursor-pointer items-center gap-2 font-semibold"><Terminal className="size-4 shrink-0 text-primary" />3 · Probar el webhook publicado</summary>
-      <p className="mt-3 text-sm text-muted-foreground">Ejecuta en Bash con curl y OpenSSL. Datos sintéticos, solicitud real al servidor. Este comando usa la clave pública de demostración «sandbox»; si se configura una clave privada, deberá firmarse desde tu servicio puente.</p>
-      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Caso de prueba del webhook">
-        {Object.entries(cases).map(([key, item]) => <Button key={key} size="sm" variant={selected === key ? "default" : "outline"} aria-pressed={selected === key} onClick={() => { setSelected(key as keyof typeof cases); setCopied(false); setCopyError(""); }}>{item.label}</Button>)}
-        <Button size="sm" variant="outline" onClick={copy}>{copied ? <Check /> : <Clipboard />}{copied ? "Copiado" : "Copiar comando"}</Button>
+      {ch === "correo" && <Correo />}
+      {ch === "whatsapp" && <WhatsApp />}
+      {ch === "api" && <InboundWebhook />}
+      {ch === "archivo" && <p className="text-sm text-muted-foreground">Adjunta tu PDF, imagen, XML o texto en el panel de carga del paso 2.</p>}
+    </Step>
+
+    <Step n={2} title={`Los 4 ejercicios · entrada ${label}`} text="a) 10 facturas típicas · b) lote de 100 · c) ráfaga de 300 · d) ataque masivo de empresa fantasma.">
+      <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+        <h4 className="font-semibold">a) 10 facturas típicas — descarga para auditoría manual</h4>
+        <ul className="grid gap-1 text-xs sm:grid-cols-2">
+          {pdfs.map((c) => <li key={c.file}><a className="inline-flex items-center gap-1 text-primary underline" href={`/downloads/${c.file}`} download><Download className="size-3" />{c.label}</a></li>)}
+        </ul>
+        <p className="text-xs text-muted-foreground">Los otros {JURY_CASES.length - pdfs.length} casos (cuenta cambiada, no cuadra, presupuesto, tasa alterada) se generan como texto al correr el lote.</p>
+        <a href="/downloads/lote-wow-100-facturas.zip" download className="inline-flex items-center gap-1 text-xs text-primary underline"><Download className="size-3" />b) Descargar las 100 facturas (ZIP)</a>
       </div>
-      <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 text-xs"><code>{command}</code></pre>
-      {copyError && <p role="alert" className="mt-2 text-sm text-destructive">{copyError}</p>}
-      <p className="mt-3 text-sm text-muted-foreground">Resultado esperado: HTTP 200 · {selected === "valid" ? "PAGAR con motivo y huella SHA-256 de la decisión (no es un comprobante bancario)" : "FRENAR por proveedor no autorizado"}. Para probar el rechazo de firma, sustituye la cabecera por X-Blinkagent-Signature: sha256=falsa: debe responder HTTP 401.</p>
-      <p className="mt-2 text-sm text-muted-foreground">No mueve dinero, no escribe en QuickBooks ni sincroniza el historial del navegador. Detecta duplicados solo si envías el historial en la solicitud. Una prueba completa con pago real requiere habilitar y verificar las conexiones de Blinka/Stripe y QuickBooks.</p>
-    </details>
+      <div id="factura-propia" className="scroll-mt-20"><DemoUpload /></div>
+      <Burst />
+      <ShellAttack />
+    </Step>
+
+    <Step n={3} title="Revisa las decisiones" text="Pagadas salen solas; frenadas y escaladas esperan a un humano. Las alertas de fraude aparecen como ventana en Validaciones.">
+      <div className="flex flex-wrap gap-2">
+        <Button asChild size="sm"><Link to="/validaciones">Ir a Validaciones</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link to="/analitica">Ver analítica</Link></Button>
+      </div>
+    </Step>
+
+    <Step n={4} title="Salida · Stripe paga, QuickBooks contabiliza" text="Solo lo aprobado genera orden firmada hacia Blinka/Stripe y el BillPayment vuelve a QuickBooks.">
+      <BlinkaConnect />
+      <div className="grid gap-4 lg:grid-cols-2"><StripeWebhook /><QuickBooksWebhook /></div>
+    </Step>
+
+    <Step n={5} title="Cierre · Auditoría y conciliación" text="Cada decisión queda con nombre, fecha exacta y motivo. Descarga el Excel listo para el contador.">
+      <Button asChild size="sm" variant="outline"><Link to="/auditoria">Registro de auditoría y Excel</Link></Button>
+    </Step>
   </section>;
 }
