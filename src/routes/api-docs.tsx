@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Panel, inputCls } from "@/components/ui-bits";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/api-docs")({
   head: () => ({
@@ -31,11 +32,11 @@ const PRESETS: Record<string, { label: string; body: object }> = {
   sinPagador: { label: "🛑 Sin pagador (FRENAR)", body: { number: "API-5001", vendorName: base.vendorName, vendorTaxId: base.vendorTaxId, bankAccount: base.bankAccount, amount: 500_000, currency: "COP", category: "Suministros" } },
 };
 
-export function ApiDocs() {
-  const [origin, setOrigin] = useState("https://golden-agent-guardian.lovable.app");
+export function ApiDocs({ embedded = false }: { embedded?: boolean }) {
+  const [origin, setOrigin] = useState("https://blinkagent.lovable.app");
   useEffect(() => setOrigin(window.location.origin), []);
   const url = `${origin}/api/public/v1/decide`;
-  const [body, setBody] = useState(JSON.stringify(PRESETS["pagar"]!.body, null, 2));
+  const [body, setBody] = useState(JSON.stringify(PRESETS["pagar"]?.body, null, 2));
   const [res, setRes] = useState<{ status: number; ms: number; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [lang, setLang] = useState<"curl" | "js" | "py">("curl");
@@ -66,12 +67,12 @@ export function ApiDocs() {
 
   return (
     <div className="space-y-6">
-      <div>
+      {!embedded && <div>
         <h1 className="text-2xl font-bold">API REST para jurados</h1>
         <p className="text-sm text-muted-foreground">
           Envía una factura en JSON y el motor de reglas responde PAGAR, FRENAR o ESCALAR con el porqué. Pagos simulados: no se mueve dinero.
         </p>
-      </div>
+      </div>}
 
       <Panel title="Endpoint">
         <div className="space-y-2 text-sm">
@@ -84,19 +85,19 @@ export function ApiDocs() {
         </div>
       </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={embedded ? "grid gap-6" : "grid gap-6 lg:grid-cols-2"}>
         <Panel title="Probador en vivo">
           <div className="mb-3 flex flex-wrap gap-2">
             {Object.entries(PRESETS).map(([k, p]) => (
-              <button key={k} onClick={() => setBody(JSON.stringify(p.body, null, 2))} className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted">
+              <Button key={k} onClick={() => setBody(JSON.stringify(p.body, null, 2))} className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted">
                 {p.label}
-              </button>
+              </Button>
             ))}
           </div>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={16} className={`${inputCls} font-mono text-xs`} spellCheck={false} />
-          <button onClick={send} disabled={busy} className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
+          <textarea aria-label="Factura JSON de entrada" value={body} onChange={(e) => setBody(e.target.value)} rows={16} className={`${inputCls} font-mono text-xs`} spellCheck={false} />
+          <Button onClick={send} disabled={busy} className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
             {busy ? "Enviando…" : "Enviar al motor"}
-          </button>
+          </Button>
         </Panel>
 
         <Panel title="Respuesta">
@@ -122,11 +123,11 @@ export function ApiDocs() {
       <Panel title="Copiar y pegar">
         <div className="mb-2 flex gap-2">
           {(["curl", "js", "py"] as const).map((l) => (
-            <button key={l} onClick={() => setLang(l)} className={`rounded-md px-3 py-1 text-xs ${lang === l ? "bg-primary text-primary-foreground" : "border border-border"}`}>
+            <Button key={l} onClick={() => setLang(l)} className={`rounded-md px-3 py-1 text-xs ${lang === l ? "bg-primary text-primary-foreground" : "border border-border"}`}>
               {l === "curl" ? "curl" : l === "js" ? "JavaScript" : "Python"}
-            </button>
+            </Button>
           ))}
-          <button onClick={() => navigator.clipboard.writeText(snippet)} className="ml-auto rounded-md border border-border px-3 py-1 text-xs">Copiar</button>
+          <Button onClick={() => navigator.clipboard.writeText(snippet)} className="ml-auto rounded-md border border-border px-3 py-1 text-xs">Copiar</Button>
         </div>
         <pre className="overflow-auto rounded bg-muted p-3 text-xs">{snippet}</pre>
       </Panel>

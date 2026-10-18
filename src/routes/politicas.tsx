@@ -5,7 +5,6 @@ import { fmt, money } from "@/lib/rules";
 import { log, store, uid, useAppState, useTenantId } from "@/lib/store";
 import { flag, getTenant } from "@/lib/tenants";
 import type { Policies, Vendor } from "@/lib/types";
-import { BlinkaConnect } from "@/components/blinka-connect";
 
 export const Route = createFileRoute("/politicas")({
   head: () => ({
@@ -148,7 +147,6 @@ function PoliciesPage() {
         </form>
       </Panel>
 
-      <BlinkaConnect />
       <button className="text-sm text-muted-foreground underline" onClick={() => confirm("¿Reiniciar todo el demo?") && store.reset()}>
         Reiniciar demo (borra facturas, auditoría y restaura políticas)
       </button>
