@@ -22,3 +22,4 @@
 - Mount preventive fraud dialogs only in Inbox, keyed by active tenant; dismissal tracks the current incident set and evidence count — new evidence can reopen the dialog without altering audit records.
 
 - /integraciones co-locates the REST tester and simulated Blinka exporter; /api-docs stays available for compatibility — centralize controls without changing rules or adding a real outbound API.
+- Provider webhooks (/api/public/v1/quickbooks, /api/public/v1/stripe) verify the official Intuit/Stripe signatures via src/lib/provider-signatures.ts and never persist or move money — keeps the QuickBooks → rules → Stripe → QuickBooks flow demonstrable without real credentials.
