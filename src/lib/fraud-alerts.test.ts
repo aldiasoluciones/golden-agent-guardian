@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fraudIncidents, fraudReportWorkbook, recordFraudAlerts, fraudScan } from "./fraud-alerts";
+import { fraudIncidents, fraudReportWorkbook, recordFraudAlerts, fraudScan, markFraudReviewed } from "./fraud-alerts";
 import { DEFAULT_POLICIES } from "./store";
 import type { AppState, Invoice } from "./types";
 
@@ -12,6 +12,14 @@ const invoice = (n: number, minutes = n, check = "bank"): Invoice => ({
 const state = (invoices: Invoice[]): AppState => ({ invoices, policies: DEFAULT_POLICIES, audit: [] });
 
 describe("alerta preventiva por cliente", () => {
+  it("retira el banner tras revisar y lo reactiva con una nueva sospechosa", () => {
+    const detected = recordFraudAlerts(state([invoice(1), invoice(2), invoice(3)]), "2026-10-18T00:04:00Z");
+    expect(fraudScan(detected).unreviewed).toBe(3);
+    const reviewed = markFraudReviewed(detected, ["INV-1", "INV-2", "INV-3"], "2026-10-18T00:05:00Z");
+    expect(fraudScan(reviewed).unreviewed).toBe(0);
+    expect(reviewed.invoices).toEqual(detected.invoices);
+    expect(fraudScan({ ...reviewed, invoices: [...reviewed.invoices, invoice(4)] }).unreviewed).toBe(1);
+  });
   it("espera al final del escaneo para presentar el resultado consolidado", () => {
     const detected = recordFraudAlerts(state([invoice(1), invoice(2), invoice(3)]), "2026-10-18T00:04:00Z");
     const queued = { ...detected, invoices: [...detected.invoices, { ...invoice(4), status: "auditando" as const }] };
