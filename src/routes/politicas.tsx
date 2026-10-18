@@ -1,3 +1,4 @@
+import { CURRENCIES } from "@/lib/rails";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Panel, inputCls } from "@/components/ui-bits";
@@ -129,7 +130,7 @@ function PoliciesPage() {
           <select className={inputCls} value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })}>
             {Object.keys(p.budgets).map((c) => <option key={c}>{c}</option>)}
           </select>
-          <select className={inputCls} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "COP" | "USD" })}><option>COP</option><option>USD</option></select>
+          <select className={inputCls} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as Vendor["currency"] })}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select>
           <input type="number" className={inputCls} placeholder="Promedio" value={v.avgAmount} onChange={(e) => setV({ ...v, avgAmount: Number(e.target.value) })} />
           <select className={inputCls} value={v.country} onChange={(e) => setV({ ...v, country: e.target.value as NonNullable<Vendor["country"]> })}>
             <option value="CO">Colombia</option><option value="US">EE. UU.</option><option value="BR">Brasil</option><option value="MX">México</option><option value="OTRO">Otro</option>

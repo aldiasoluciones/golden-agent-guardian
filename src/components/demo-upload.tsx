@@ -1,3 +1,4 @@
+import { toCurrency } from "@/lib/rails";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
@@ -59,7 +60,7 @@ export function DemoUpload() {
       if (m) setTenant(m.tenant.id);
       return addInvoice({
         number: String(x.number || "S/N"), vendorName: String(x.vendorName || "Desconocido"), nit: String(x.nit || ""),
-        bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: x.currency === "USD" ? "USD" : "COP",
+        bankAccount: String(x.bankAccount || ""), amount: Number(x.amount) || 0, currency: toCurrency(x.currency),
         category: String(x.category || "Otro"), dueDate: String(x.dueDate || ""), description: String(x.description || ""), source: `Archivo: ${f.name}`, payer,
       }).id;
     };

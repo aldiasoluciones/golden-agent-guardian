@@ -1,3 +1,4 @@
+import { toCurrency } from "@/lib/rails";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
@@ -79,7 +80,7 @@ function useLive(channel: Channel, sender: string) {
             const payer: Invoice["payer"] = match
               ? { status: "detectado", name: match.tenant.name, how: match.how }
               : { status: hasPayer ? "desconocido" : "sin-dato", name: payerFields.name || payerFields.taxId || payerFields.email || "No indicado", how: hasPayer ? "sin coincidencia" : "la factura no indica empresa pagadora" };
-            data = { number: String(x["number"] || "S/N"), vendorName: String(x["vendorName"] || "Desconocido"), nit: String(x["nit"] || ""), bankAccount: String(x["bankAccount"] || ""), amount: Number(x["amount"]) || 0, currency: x["currency"] === "USD" ? "USD" : "COP", category: String(x["category"] || "Otro"), dueDate: String(x["dueDate"] || ""), description: String(x["description"] || ""), source: "", payer };
+            data = { number: String(x["number"] || "S/N"), vendorName: String(x["vendorName"] || "Desconocido"), nit: String(x["nit"] || ""), bankAccount: String(x["bankAccount"] || ""), amount: Number(x["amount"]) || 0, currency: toCurrency(x["currency"]), category: String(x["category"] || "Otro"), dueDate: String(x["dueDate"] || ""), description: String(x["description"] || ""), source: "", payer };
           }
           const inv = await ingest(channel, file ? `${sender} · ${file.name}` : sender, data);
           setMsgs((m) => [...m, { from: "agent", text: `${file ? `${file.name}\n` : ""}${inv.payer ? `Empresa pagadora: ${inv.payer.name}\n` : ""}${reply(inv)}`, invId: inv.id }]);
