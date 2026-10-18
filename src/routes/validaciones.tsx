@@ -7,6 +7,7 @@ import { useAppState, useTenantId } from "@/lib/store";
 import { getTenants } from "@/lib/tenants";
 import { budgetSummary, pendingValidation } from "@/lib/treasury";
 import { fmt, invCOP } from "@/lib/rules";
+import { RefreshBar, useHourlyRefresh } from "@/hooks/use-hourly-refresh";
 
 export const Route = createFileRoute("/validaciones")({
   head: () => ({ meta: [
@@ -23,7 +24,8 @@ function CommandCenter() {
   const { invoices, policies } = useAppState();
   const tenantId = useTenantId();
   const company = getTenants().find((t) => t.id === tenantId);
-  const pending = pendingValidation(invoices).sort((a, b) => Number(b.priority === "alta") - Number(a.priority === "alta") || a.dueDate.localeCompare(b.dueDate));
+  const hr = useHourlyRefresh(invoices, tenantId);
+  const pending = pendingValidation(hr.visible).sort((a, b) => Number(b.priority === "alta") - Number(a.priority === "alta") || a.dueDate.localeCompare(b.dueDate));
   const budget = budgetSummary(invoices, policies, new Date().toISOString().slice(0, 7));
   const frozen = invoices.filter((i) => i.status === "frenada" || i.status === "rechazada");
   const protectedCOP = frozen.reduce((s, i) => s + invCOP(i, policies), 0);
@@ -42,6 +44,7 @@ function CommandCenter() {
     </section>
     <section className="space-y-3">
       <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Cola de validación humana · {pending.length}</h2>
+      <RefreshBar waiting={pendingValidation(invoices).length - pending.length} lastRefresh={hr.lastRefresh} note={hr.note} refresh={hr.refresh} />
       {pending.length ? pending.map((invoice) => <ReviewCase key={`${tenantId}:${invoice.id}`} invoice={invoice} />) : <div className="flex flex-col items-center rounded-lg border border-border py-16 text-center"><ClipboardCheck className="mb-4 h-10 w-10 text-primary" /><h3 className="text-xl font-semibold">Todo al día</h3><p className="mt-2 text-sm text-muted-foreground">No hay facturas pendientes de validación humana.</p></div>}
     </section>
     <p className="flex flex-wrap items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" />Comprobante SHA-256 · Registro inmutable de decisiones · Conciliación en Excel</p>

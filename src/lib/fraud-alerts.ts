@@ -30,7 +30,16 @@ export function fraudScan(state: AppState) {
     id: "ESCANEO-CONSOLIDADO", startedAt: first.createdAt, triggeredAt: last.createdAt,
     invoices, amountCOP: invoices.reduce((sum, i) => sum + invCOP(i, state.policies), 0),
   } : undefined;
-  return { pending, eventCount: events.length, incident };
+  const reviewed = new Set(state.reviewedFraudIds ?? []);
+  const unreviewed = invoices.filter((i) => !reviewed.has(i.id)).length;
+  return { pending, eventCount: events.length, incident, unreviewed };
+}
+
+/** Marks suspicious invoices as reviewed (hides the banner); never changes payment decisions. */
+export function markFraudReviewed(state: AppState, ids: string[], at: string): AppState {
+  const reviewedFraudIds = [...new Set([...(state.reviewedFraudIds ?? []), ...ids])];
+  return { ...state, reviewedFraudIds, audit: [{ id: `REV-${Date.parse(at) || 0}-${ids.length}`, at, type: "alerta_revisada",
+    message: `Alertas preventivas revisadas por el tesorero: ${ids.length} factura(s) sospechosa(s).` }, ...state.audit] };
 }
 
 /** Suspicions, not confirmed fraud. Input must contain only one tenant's invoices. */

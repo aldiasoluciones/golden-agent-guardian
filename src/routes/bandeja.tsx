@@ -1,7 +1,8 @@
 import { BackToValidations } from "@/components/back-link";
 import { FraudAlert } from "@/components/fraud-alert";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { RefreshBar, useHourlyRefresh } from "@/hooks/use-hourly-refresh";
 import { Panel, StatusBadge, inputCls } from "@/components/ui-bits";
 import { Receipt } from "@/components/receipt";
 import { humanDecision, runAgent } from "@/lib/agent";
@@ -35,27 +36,7 @@ export function Inbox() {
   const [sel, setSel] = useState<string | null>(null);
   const [live, setLive] = useState<{ id: string; checks: Check[]; reasoning: string; text: string; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [shown, setShown] = useState<Set<string> | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [note, setNote] = useState("");
-  const latest = useRef(invoices);
-  latest.current = invoices;
-  const refresh = (manual: boolean) => {
-    const ids = latest.current.map((i) => i.id);
-    setShown((prev) => {
-      const added = prev ? ids.filter((id) => !prev.has(id)).length : 0;
-      if (manual) setNote(added ? `${added} factura(s) nueva(s) agregada(s).` : "Sin novedades.");
-      return new Set(ids);
-    });
-    setLastRefresh(new Date());
-  };
-  useEffect(() => {
-    refresh(false);
-    const t = setInterval(() => refresh(false), 60 * 60 * 1000);
-    return () => clearInterval(t);
-  }, [tenantId]);
-  const visible = shown ? invoices.filter((i) => shown.has(i.id)) : invoices;
-  const waiting = shown ? invoices.length - visible.length : 0;
+  const { visible, waiting, lastRefresh, note, refresh } = useHourlyRefresh(invoices, tenantId);
 
   const start = async (id: string) => {
     setSel(id);
@@ -87,11 +68,7 @@ export function Inbox() {
     <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       <div className="space-y-4">
         <Panel title={`Cuentas por pagar (${visible.length})`}>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span>Se actualiza sola cada hora{lastRefresh ? ` · última ${lastRefresh.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}` : ""}</span>
-            <button onClick={() => refresh(true)} className="rounded-md border border-border px-3 py-1 text-foreground hover:bg-secondary">Refrescar ahora{waiting ? ` (${waiting} nuevas)` : ""}</button>
-          </div>
-          {note && <p className="mb-2 text-xs text-primary" role="status">{note}</p>}
+          <div className="mb-3"><RefreshBar waiting={waiting} lastRefresh={lastRefresh} note={note} refresh={refresh} /></div>
           {visible.length === 0 && <p className="text-sm text-muted-foreground">Vacía. Envía facturas desde Demo.</p>}
           <ul className="space-y-2">
             {visible.map((i) => (

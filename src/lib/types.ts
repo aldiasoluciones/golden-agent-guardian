@@ -91,11 +91,11 @@ export type Channel = "whatsapp" | "correo" | "manual";
 export type AuditEvent = {
   id: string;
   at: string;
-  type: "recibida" | "auditoria" | "pago_auto" | "retenida" | "frenada" | "aprobada" | "rechazada" | "politica" | "alerta_fraude";
+  type: "recibida" | "auditoria" | "pago_auto" | "retenida" | "frenada" | "aprobada" | "rechazada" | "politica" | "alerta_fraude" | "alerta_revisada";
   fraudIncident?: import("./fraud-alerts").FraudIncident;
   message: string;
   invoiceId?: string;
   amount?: number;
 };
 
-export type AppState = { policies: Policies; invoices: Invoice[]; audit: AuditEvent[] };
+export type AppState = { policies: Policies; invoices: Invoice[]; audit: AuditEvent[]; reviewedFraudIds?: string[] };
