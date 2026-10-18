@@ -8,7 +8,8 @@ const Order = z.object({
   account: z.string().max(120),
   amount: z.number(),
   currency: z.string().max(8),
-  rail: z.string().max(10),
+  rail: z.string().max(12),
+  country: z.string().max(4).optional(),
   approval: z.string().max(40),
   reason: z.string().max(1000),
 });

@@ -142,7 +142,7 @@ function PoliciesPage() {
             <option value="local">Local</option><option value="swift">SWIFT</option><option value="ach">ACH</option>
           </select>
           <select className={inputCls} title="Moneda en que prefiere cobrar" value={v.payoutCurrency ?? ""} onChange={(e) => setV({ ...v, payoutCurrency: (e.target.value || undefined) as Vendor["payoutCurrency"] })}>
-            <option value="">Cobra en su moneda</option><option value="COP">Cobra en COP</option><option value="USD">Cobra en USD</option>
+            <option value="">Cobra en su moneda</option>{CURRENCIES.map((c) => <option key={c} value={c}>Cobra en {c}</option>)}
           </select>
           <button className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Agregar</button>
         </form>
