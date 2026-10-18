@@ -24,6 +24,6 @@ function Demo() {
     <DemoUpload />
     <Burst />
     <ShellAttack />
-    <p className="text-center text-xs text-muted-foreground"><Link to="/api-docs" className="text-primary underline">Ver API REST</Link></p>
+    <p className="text-center text-xs text-muted-foreground"><Link to="/integraciones" className="text-primary underline">Centro de Integración · Entrada y salida Blinka</Link></p>
   </div>;
 }
