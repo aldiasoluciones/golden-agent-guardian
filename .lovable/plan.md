@@ -21,6 +21,11 @@ Documento `guion-final-blinkagent.md` en Archivos, con:
 - Se mantienen los 5 sellos de confianza con sus aclaraciones de alcance; sin afirmar certificaciones.
 - Actualizar título y descripción de la página.
 
+## 3. Bandeja sin interrupciones
+- La bandeja se actualiza sola una vez por hora; las facturas nuevas se agregan sin mover lo que el tesorero está revisando.
+- Botón "Refrescar ahora" con la hora de la última actualización y el aviso "Sin novedades" cuando no llegó nada.
+- Nunca se abre nada encima de la pantalla al refrescar.
+
 ## Detalles técnicos
 - Solo cambios de presentación en `src/routes/index.tsx` (y el componente de sellos si hace falta texto); sin tocar reglas de pago.
 - Verificar compilación y pruebas existentes.
