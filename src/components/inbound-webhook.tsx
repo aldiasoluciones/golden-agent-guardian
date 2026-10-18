@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 const base = { vendorName: "Papelería Andina S.A.S", vendorTaxId: "900123456-1", bankAccount: "Bancolombia 123-456789-01", currency: "COP", category: "Suministros", payer: { name: "AL DIA Demo S.A.S" } };
 const CASES: Record<string, { label: string; invoice: object }> = {
-  ok: { label: "QuickBooks: Bill válido", invoice: { number: "QB-BILL-1001", ...base, amount: 1_200_000 } },
+  ok: { label: "ERP: factura válida", invoice: { number: "WH-1001", ...base, amount: 1_200_000 } },
   fake: { label: "Proveedor fuera de lista", invoice: { number: "WH-2001", ...base, vendorName: "Fantasma Ltda", vendorTaxId: "999000111-2", bankAccount: "Nequi 300-0000000", amount: 900_000 } },
   bank: { label: "Cuenta cambiada", invoice: { number: "WH-3001", ...base, bankAccount: "Nubank 9999-0001", amount: 1_700_000 } },
 };
