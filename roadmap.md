@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Crear alerta preventiva por tres facturas sospechosas en diez minutos, aislada por cliente, e informe descargable
-- [ ] Probar el umbral, la ventana temporal y el flujo de alerta e informe
+- [x] Crear alerta preventiva por tres facturas sospechosas en diez minutos, aislada por cliente, e informe descargable
+- [x] Probar el umbral, la ventana temporal y el flujo de alerta e informe
 - [x] Añadir cinco sellos de confianza con respaldo técnico accesible y alcance verificable
 - [x] Verificar los desplegables en escritorio y móvil y ejecutar las pruebas existentes
 - [x] Reiniciar el lote jurados sin alterar otras facturas y verificar dos corridas
