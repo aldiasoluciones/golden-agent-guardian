@@ -13,6 +13,26 @@ export type FraudIncident = {
   amountCOP: number;
 };
 
+/** Read-only scan: wait for all queued checks and retain historical evidence. */
+export function fraudScan(state: AppState) {
+  const events = state.audit.filter((e) => e.type === "alerta_fraude" && e.fraudIncident);
+  const rows = new Map<string, Invoice>();
+  for (const event of events) for (const invoice of event.fraudIncident?.invoices ?? []) rows.set(invoice.id, invoice);
+  for (const invoice of state.invoices) {
+    if (invoice.status !== "pendiente" && invoice.status !== "auditando" &&
+      invoice.checks?.some((check) => !check.passed && SIGNALS.includes(check.id))) rows.set(invoice.id, invoice);
+  }
+  const invoices = [...rows.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  const pending = state.invoices.filter((i) => i.status === "pendiente" || i.status === "auditando").length;
+  const first = invoices[0];
+  const last = invoices[invoices.length - 1];
+  const incident: FraudIncident | undefined = events.length && first && last ? {
+    id: "ESCANEO-CONSOLIDADO", startedAt: first.createdAt, triggeredAt: last.createdAt,
+    invoices, amountCOP: invoices.reduce((sum, i) => sum + invCOP(i, state.policies), 0),
+  } : undefined;
+  return { pending, eventCount: events.length, incident };
+}
+
 /** Suspicions, not confirmed fraud. Input must contain only one tenant's invoices. */
 export function fraudIncidents(invoices: Invoice[], policies: AppState["policies"]): FraudIncident[] {
   const seen = new Set<string>();
