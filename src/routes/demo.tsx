@@ -37,6 +37,7 @@ function Demo() {
       <h1 className="text-3xl font-bold tracking-tight">Demo de punta a punta</h1>
       <p className="mt-1 text-muted-foreground">Entrada → decisión → salida. Todo simulado: no se mueve dinero real.</p>
     </div>
+    <FullFlow />
     <Step id="entrada" n={1} title="Entrada · La factura llega" text="Por correo, WhatsApp, archivo, lote o directamente desde el ERP con firma segura.">
       <div className="grid gap-6 lg:grid-cols-2"><Correo /><WhatsApp /></div>
       <DemoUpload />
@@ -49,7 +50,6 @@ function Demo() {
       <ShellAttack />
     </Step>
     <Step id="salida" n={3} title="Salida · Orden hacia Blinka" text="Solo las facturas aprobadas generan orden de dispersión firmada, con su riel asignado.">
-      <FullFlow />
       <BlinkaConnect />
       <StripeWebhook />
     </Step>
