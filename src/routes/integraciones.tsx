@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { ApiDocs } from "./api-docs";
 import { BlinkaConnect } from "@/components/blinka-connect";
+import { InboundWebhook } from "@/components/inbound-webhook";
 
 export const Route = createFileRoute("/integraciones")({
   head: () => ({ meta: [
@@ -25,6 +26,7 @@ function Integrations() {
       <section className="min-w-0 space-y-4">
         <h2 className="flex items-center gap-2 text-xl font-semibold"><ArrowDownToLine className="size-5 text-primary" />Entrada · Evaluar factura</h2>
         <p className="text-sm text-muted-foreground">Devuelve PAGAR, FRENAR o ESCALAR y su motivo. No guarda facturas; el historial debe incluirse en cada solicitud.</p>
+        <InboundWebhook />
         <ApiDocs embedded />
       </section>
       <section className="min-w-0 space-y-4">
