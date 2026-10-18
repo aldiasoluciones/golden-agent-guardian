@@ -3,9 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAppState, useTenantId } from "@/lib/store";
+import { store, useAppState, useTenantId } from "@/lib/store";
 import { getTenants } from "@/lib/tenants";
-import { fraudReportWorkbook, fraudScan } from "@/lib/fraud-alerts";
+import { fraudReportWorkbook, fraudScan, markFraudReviewed } from "@/lib/fraud-alerts";
 import { downloadBlob } from "@/lib/reconciliation";
 import { fmt } from "@/lib/rules";
 
@@ -36,6 +36,11 @@ export function FraudAlert({ reports = false }: { reports?: boolean }) {
   if (!reports && scan.pending) return <section role="status" className="flex flex-wrap items-center gap-2 border-l-4 border-border bg-secondary p-3 text-sm text-muted-foreground">
     <AlertTriangle className="h-4 w-4 shrink-0" />Escaneo preventivo en curso · {scan.pending} factura(s) por terminar.
   </section>;
+  const markReviewed = () => {
+    if (consolidated) store.set((s) => markFraudReviewed(s, consolidated.fraudIncident.invoices.map((i) => i.id), new Date().toISOString()));
+    setOpen(false);
+  };
+  if (!reports && !scan.unreviewed) return null;
   if (!reports) return <>
     <section role="status" className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-destructive bg-destructive/10 p-4">
       <div className="min-w-0 text-sm"><p className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />Escaneo preventivo finalizado</p>
@@ -64,7 +69,8 @@ export function FraudAlert({ reports = false }: { reports?: boolean }) {
           {error && <p role="alert" className="text-destructive">{error}</p>}
         </div>
         <DialogFooter className="gap-2">
-           <Button variant="outline" onClick={() => setOpen(false)}>Cerrar alerta</Button>
+           <Button variant="outline" onClick={() => setOpen(false)}>Cerrar</Button>
+           <Button variant="secondary" onClick={markReviewed}>Marcar como revisado</Button>
           <Button asChild><Link to="/auditoria">Ver todos los informes</Link></Button>
         </DialogFooter>
       </DialogContent>
