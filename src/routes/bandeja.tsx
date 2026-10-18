@@ -1,4 +1,5 @@
 import { BackToValidations } from "@/components/back-link";
+import { FraudAlert } from "@/components/fraud-alert";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Panel, StatusBadge, inputCls } from "@/components/ui-bits";
@@ -6,7 +7,7 @@ import { Receipt } from "@/components/receipt";
 import { humanDecision, runAgent } from "@/lib/agent";
 import { fmt, invCOP, money } from "@/lib/rules";
 import { budgetSummary, pendingValidation } from "@/lib/treasury";
-import { useAppState } from "@/lib/store";
+import { useAppState, useTenantId } from "@/lib/store";
 import type { Check, Invoice } from "@/lib/types";
 
 export const Route = createFileRoute("/bandeja")({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/bandeja")({
 
 
 export function Inbox() {
+  const tenantId = useTenantId();
   const { invoices, policies } = useAppState();
   const budget = budgetSummary(invoices, policies, new Date().toISOString().slice(0, 7));
   const frozen = invoices.filter((i) => i.status === "frenada" || i.status === "rechazada");
@@ -54,6 +56,7 @@ export function Inbox() {
 
   return (
     <div className="space-y-6">
+    <FraudAlert key={tenantId} />
     <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Kpi label="Pendientes de tu firma" value={String(pendingValidation(invoices).length)} cls="text-warning" />
       <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Pagado vs. presupuesto</p><p className="mt-1 font-mono text-lg">{budget.percent.toFixed(0)}%</p><progress aria-label="Presupuesto utilizado" max={100} value={Math.min(100, budget.percent)} className="mt-2 h-1.5 w-full" /><p className="mt-1 truncate text-[11px] text-muted-foreground">{fmt(budget.amount)} de {fmt(policies.periodLimit)}</p></div>

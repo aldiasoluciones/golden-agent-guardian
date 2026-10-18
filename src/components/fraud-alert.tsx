@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppState, useTenantId } from "@/lib/store";
 import { getTenants } from "@/lib/tenants";
 import { fraudReportWorkbook } from "@/lib/fraud-alerts";
@@ -15,6 +16,9 @@ export function FraudAlert({ reports = false }: { reports?: boolean }) {
   const events = audit.filter((e) => e.type === "alerta_fraude" && e.fraudIncident);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [dismissed, setDismissed] = useState("");
+  const signature = JSON.stringify(events.map((e) => [e.id, e.fraudIncident?.invoices.length]));
+  const latest = [...events].sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0];
   if (!events.length) return null;
   const download = async (event: typeof events[number]) => {
     if (!event.fraudIncident) return;
@@ -26,10 +30,33 @@ export function FraudAlert({ reports = false }: { reports?: boolean }) {
     } catch { setError("No se pudo descargar el informe. Intenta nuevamente."); }
     finally { setBusy(false); }
   };
-  if (!reports) return <aside role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 border-l-4 border-destructive bg-destructive/10 p-4">
-    <div className="flex items-start gap-3"><AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-destructive" /><div><p className="font-semibold">Alerta preventiva de fraude · {company}</p><p className="text-sm text-muted-foreground">{events.length} alerta(s): tres o más facturas sospechosas en 10 minutos. Pendiente de investigación.</p></div></div>
-    <Button asChild variant="outline"><Link to="/auditoria">Ver informes</Link></Button>
-  </aside>;
+  if (!reports) return <>
+    <Button variant="outline" className="border-destructive/40 text-destructive" onClick={() => setDismissed("")}><AlertTriangle />Ver alertas preventivas ({events.length})</Button>
+    <Dialog open={dismissed !== signature} onOpenChange={(open) => setDismissed(open ? "" : signature)}>
+      <DialogContent className="max-h-[85dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg border-destructive/40">
+        <DialogHeader className="pr-6 text-left">
+          <AlertTriangle className="mb-2 h-8 w-8 text-destructive" aria-hidden="true" />
+          <DialogTitle className="leading-snug">Alerta preventiva de fraude</DialogTitle>
+          <DialogDescription className="break-words">{company} · {events.length} alerta(s) registrada(s)</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 text-sm">
+          <p className="border-l-4 border-destructive bg-destructive/10 p-3">Tres o más facturas con indicios sospechosos en 10 minutos. Requiere investigación; no confirma fraude ni un acceso al servidor.</p>
+          {latest && <div className="space-y-2">
+            <p className="text-muted-foreground">Última alerta · {new Date(latest.at).toLocaleString("es-CO")}</p>
+            <p><strong>{latest.fraudIncident?.invoices.length} facturas</strong> · Monto observado: {fmt(latest.amount ?? 0)}</p>
+            <ul className="space-y-2 border-t border-border pt-3">{latest.fraudIncident?.invoices.map((i) => <li key={i.id} className="break-words"><strong>{i.number}</strong> · {i.vendorName}<p className="text-muted-foreground">{i.decisionReason}</p></li>)}</ul>
+          </div>}
+          <p className="text-muted-foreground">Confirma el proveedor y la cuenta por un canal independiente antes de autorizar excepciones. El monto observado no equivale a pérdidas confirmadas.</p>
+          {latest && <Button variant="outline" disabled={busy} onClick={() => download(latest)}><Download />{busy ? "Generando informe…" : "Descargar informe Excel"}</Button>}
+          {error && <p role="alert" className="text-destructive">{error}</p>}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => setDismissed(signature)}>Cerrar alerta</Button>
+          <Button asChild><Link to="/auditoria">Ver todos los informes</Link></Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>;
   return <section className="space-y-3" aria-label="Informes preventivos de fraude">
     <h2 className="text-lg font-semibold">Informes preventivos de fraude · {company}</h2>
     {events.map((event) => <details key={event.id} className="rounded-lg border border-destructive/40 p-4">
