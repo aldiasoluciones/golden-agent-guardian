@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Reunir entrada y salida simulada en Centro de Integración, enlazado desde menú y Demo
-- [ ] Verificar navegación y controles de ambas conexiones
+- [x] Reunir entrada y salida simulada en Centro de Integración, enlazado desde menú y Demo
+- [x] Verificar navegación y controles de ambas conexiones
 - [x] Crear alerta preventiva por tres facturas sospechosas en diez minutos, aislada por cliente, e informe descargable
 - [x] Probar el umbral, la ventana temporal y el flujo de alerta e informe
 - [x] Añadir cinco sellos de confianza con respaldo técnico accesible y alcance verificable
