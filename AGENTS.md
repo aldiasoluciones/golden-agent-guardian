@@ -19,5 +19,6 @@
 - Jury runs use temporary default-policy tenant states and replace only explicitly tagged jury invoices and their audit events afterward — repeated demonstrations stay isolated without bypassing rules or deleting unrelated records.
 - Trust seals are presentation-only in a shared component with explicit scope disclosures — security claims must describe implemented controls without changing payment rules or implying external certification.
 - Preventive fraud reports are deterministic tenant-local audit snapshots generated from completed duplicate, whitelist and bank checks; they never change payment decisions — preserve evidence without labeling suspected activity as confirmed fraud.
+- Mount preventive fraud dialogs only in Inbox, keyed by active tenant; dismissal tracks the current incident set and evidence count — new evidence can reopen the dialog without altering audit records.
 
 - /integraciones co-locates the REST tester and simulated Blinka exporter; /api-docs stays available for compatibility — centralize controls without changing rules or adding a real outbound API.
