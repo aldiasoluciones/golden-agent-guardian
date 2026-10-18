@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { dispersalOrders } from "@/lib/blinka-connect";
-import { sendDispersalWebhook } from "@/lib/webhook.functions";
+import { createTestWebhook, sendDispersalWebhook } from "@/lib/webhook.functions";
 import { useAppState } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,13 @@ export function BlinkaConnect() {
   const [url, setUrl] = useState("");
   const [secret, setSecret] = useState("");
   const [sending, setSending] = useState(false);
+  const [view, setView] = useState("");
+  const [making, setMaking] = useState(false);
+  const gen = async () => {
+    setMaking(true);
+    try { const r = await createTestWebhook(); if (r.ok) { setUrl(r.url); setView(r.viewUrl); setResult("Webhook de prueba listo. Ábrelo en otra pestaña y pulsa Enviar."); } else setResult(r.error); }
+    finally { setMaking(false); }
+  };
   const [log, setLog] = useState<Delivery[]>([]);
   const orders = dispersalOrders(invoices, policies);
   const test = () =>
@@ -29,7 +36,7 @@ export function BlinkaConnect() {
     setSending(true);
     const batch = orders.slice(-10);
     try {
-      const r = await sendDispersalWebhook({ data: { url, secret, orders: batch } });
+      const r = await sendDispersalWebhook({ data: { url: url.trim(), secret: secret.trim(), orders: batch } });
       setLog((l) => [{ at: new Date().toLocaleTimeString(), invoices: batch.map((o) => o.invoice).join(", "), rail: [...new Set(batch.map((o) => o.rail))].join("/"), ...r }, ...l].slice(0, 20));
       setResult(r.ok ? `Entregado · HTTP ${r.status} · ${r.ms} ms` : `Falló · ${r.status || ""} ${r.error}`);
     } catch (e) {
@@ -51,6 +58,10 @@ export function BlinkaConnect() {
       <div className="grid gap-2 sm:grid-cols-2">
         <input aria-label="URL del webhook" placeholder="https://webhook.site/…" value={url} onChange={(e) => setUrl(e.target.value)} className="rounded-md border border-border bg-background px-2 py-1 text-sm" />
         <input aria-label="Clave de firma" type="password" placeholder="Clave de firma (HMAC)" value={secret} onChange={(e) => setSecret(e.target.value)} className="rounded-md border border-border bg-background px-2 py-1 text-sm" />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="outline" onClick={gen} disabled={making}>{making ? "Generando…" : "⚡ Generar webhook de prueba"}</Button>
+        {view && <a href={view} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Ver entregas en webhook.site ↗</a>}
       </div>
       <Button size="sm" onClick={send} disabled={sending || !url}>{sending ? "Enviando…" : "Enviar webhook en vivo"}</Button>
       {result && <p className="font-mono text-xs">{result}</p>}
