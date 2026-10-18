@@ -47,7 +47,7 @@ export function BlinkaConnect() {
     <section className="space-y-3 rounded-lg border border-border bg-card p-4">
       <h3 className="font-semibold">API de salida · Blinka → Stripe → QuickBooks</h3>
       <p className="font-mono text-[11px] text-primary">QuickBooks (cuenta por pagar) → blinkagent (reglas) → Blinka/Stripe (pago) → QuickBooks (BillPayment conciliado)</p>
-      <p className="text-xs text-muted-foreground">Solo las facturas aprobadas por las reglas o por una persona generan orden (Stripe, ACH, Bre-B, Pix, SPEI, USDC) y su registro de pago para QuickBooks. Las frenadas o en revisión nunca salen. Simulado: no mueve dinero.</p>
+      <p className="text-xs text-muted-foreground">Solo las facturas aprobadas por las reglas o por una persona generan orden (Bre-B, SEPA, Pix, SPEI, CBU, ACH, Wire, SWIFT, rutas locales USD, USDC) y su registro de pago para QuickBooks. Las frenadas o en revisión nunca salen. Simulado: no mueve dinero.</p>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <select aria-label="Entorno" value={env} onChange={(e) => setEnv(e.target.value as typeof env)} className="rounded-md border border-border bg-background px-2 py-1">
           <option value="sandbox">Sandbox Blinka</option>

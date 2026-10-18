@@ -135,7 +135,7 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
 
     // Payment rail: Blinka corridor for country + payout currency, and the account must fit that rail.
     const intl = vendor.country !== undefined && vendor.country !== "CO";
-    const payCur = vendor.payoutCurrency ?? vendor.currency;
+    const payCur = vendor.currency;
     if (intl || payCur !== "COP") {
       const r = railFor(vendor.country, payCur, inv.bankAccount, vendor.payMethod);
       const ok = !!r && accountFits(r.rail, inv.bankAccount);

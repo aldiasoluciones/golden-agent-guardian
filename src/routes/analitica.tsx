@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAppState, useTenantId } from "@/lib/store";
 import { getTenants } from "@/lib/tenants";
 import { fmt } from "@/lib/rules";
-import { budgetSummary, reasonBreakdown, TYPOLOGIES } from "@/lib/treasury";
+import { budgetSummary, paidByRail, reasonBreakdown, TYPOLOGIES } from "@/lib/treasury";
 import { exportReconciliation } from "@/lib/reconciliation";
 import type { Invoice } from "@/lib/types";
 
@@ -53,6 +53,9 @@ function Analytics() {
       const n = decided.filter((i) => (type.statuses as readonly string[]).includes(i.status)).length;
       return <div key={type.label} className="rounded-lg border border-border bg-card p-5"><p className="text-sm text-muted-foreground">{type.label}</p><p className={`mt-2 font-mono text-3xl ${type.color}`}>{pct(n)}%</p><p className="mt-2 text-xs text-muted-foreground">{n} casos</p><progress aria-label={type.label} className="mt-3 h-1 w-full" max={100} value={Number(pct(n))} /></div>;
     })}</div></section>
+    <section><h2 className="text-lg font-semibold">Pagado por riel y país · COP</h2><p className="mt-1 text-xs text-muted-foreground">Rutas de pago Blinka (demo) asignadas a las facturas pagadas.</p>
+      {paidByRail(invoices, policies).length ? <table className="mt-4 w-full text-sm"><thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1">Riel</th><th>País</th><th className="text-right">Pagos</th><th className="text-right">Monto COP</th></tr></thead><tbody>{paidByRail(invoices, policies).map((r) => <tr key={r.rail + r.country} className="border-t border-border"><td className="py-1.5">{r.rail}</td><td className="font-mono">{r.country}</td><td className="text-right font-mono">{r.count}</td><td className="text-right font-mono">{fmt(r.cop)}</td></tr>)}</tbody></table> : <p className="mt-3 text-sm text-muted-foreground">Aún no hay pagos.</p>}
+    </section>
     <div className="grid gap-8 lg:grid-cols-3"><Reasons title="Pagadas / validadas" invoices={paid} /><Reasons title="Frenadas / rechazadas" invoices={rejected} /><Reasons title="Escaladas pendientes" invoices={escalated} /></div>
     <div className="flex flex-wrap gap-6 border-t border-border pt-5 text-sm text-muted-foreground"><span>Autonomía: {pct(decided.filter((i) => ["pagada", "frenada"].includes(i.status)).length)}%</span><span>Pagos automáticos fuera de reglas: {invoices.filter((i) => i.status === "pagada" && i.checks?.some((c) => !c.passed)).length}</span><span>Explicabilidad: {pct(decided.filter((i) => i.decisionReason).length)}%</span></div>
   </div>;

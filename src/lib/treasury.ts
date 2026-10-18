@@ -1,3 +1,4 @@
+import { railFor as railOf } from "./rails";
 import { invCOP, PAID } from "./rules";
 import type { Invoice, Policies } from "./types";
 
@@ -27,4 +28,19 @@ export function budgetSummary(invoices: Invoice[], policies: Policies, period: s
   const paid = invoices.filter((i) => PAID.includes(i.status) && (i.receipt?.at ?? i.createdAt).slice(0, 7) === period);
   const amount = paid.reduce((sum, i) => sum + invCOP(i, policies), 0);
   return { amount, available: Math.max(0, policies.periodLimit - amount), excess: Math.max(0, amount - policies.periodLimit), percent: policies.periodLimit > 0 ? amount / policies.periodLimit * 100 : 0 };
+}
+/** Paid amount (COP) and count grouped by Blinka rail and destination country. */
+export function paidByRail(invoices: Invoice[], policies: Policies) {
+  const out = new Map<string, { rail: string; country: string; count: number; cop: number }>();
+  for (const i of invoices) {
+    if (i.status !== "pagada" && i.status !== "aprobada") continue;
+    const v = policies.vendors.find((x) => x.nit === i.nit);
+    const country = v?.country ?? "CO";
+    const rail = railOf(v?.country, v?.currency ?? i.currency, i.bankAccount, v?.payMethod)?.label ?? "Sin ruta";
+    const k = `${rail}|${country}`;
+    const row = out.get(k) ?? { rail, country, count: 0, cop: 0 };
+    row.count++; row.cop += invCOP(i, policies);
+    out.set(k, row);
+  }
+  return [...out.values()].sort((a, b) => b.cop - a.cop);
 }
