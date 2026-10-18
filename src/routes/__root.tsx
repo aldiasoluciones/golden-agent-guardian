@@ -1,5 +1,6 @@
 import { getTenants, flag } from "@/lib/tenants";
 import { FraudAlert } from "@/components/fraud-alert";
+import { GuidedTour } from "@/components/guided-tour";
 import { CookieBanner, openCookiePrefs } from "@/components/cookie-banner";
 import { setTenant, useTenantId } from "@/lib/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -183,6 +184,7 @@ function RootComponent() {
             <button onClick={openCookiePrefs} className="underline">Preferencias de cookies</button>
           </div>
         </footer>
+        <GuidedTour />
         <CookieBanner />
       </div>
     </QueryClientProvider>
