@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardCheck, BarChart3, Inbox, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReviewCase } from "@/components/review-case";
+import { FraudAlert } from "@/components/fraud-alert";
 import { useAppState, useTenantId } from "@/lib/store";
 import { getTenants } from "@/lib/tenants";
 import { budgetSummary, pendingValidation } from "@/lib/treasury";
@@ -28,6 +29,7 @@ function CommandCenter() {
   const protectedCOP = frozen.reduce((s, i) => s + invCOP(i, policies), 0);
   const outside = invoices.filter((i) => i.status === "pagada" && i.checks?.some((c) => !c.passed)).length;
   return <div className="space-y-6">
+    <FraudAlert key={tenantId} />
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div><p className="mb-1 font-mono text-xs uppercase text-primary">AL DIA · {company?.name}</p><h1 className="text-3xl font-bold">Centro de Comando</h1></div>
       <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/bandeja"><Inbox />Bandeja</Link></Button><Button asChild variant="secondary"><Link to="/analitica"><BarChart3 />Analítica</Link></Button></div>
