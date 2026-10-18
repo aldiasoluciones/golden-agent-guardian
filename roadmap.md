@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Añadir guía de prueba real en Demo y verificar navegación, copiado y solicitudes firmadas
+- [x] Añadir guía de prueba real en Demo y verificar navegación, copiado y solicitudes firmadas
 - [x] Mover la alerta preventiva de Inicio a una ventana emergente en Bandeja y verificar cierre, informes y aislamiento por cliente
 - [x] Reunir entrada y salida simulada en Centro de Integración, enlazado desde menú y Demo
 - [x] Verificar navegación y controles de ambas conexiones
