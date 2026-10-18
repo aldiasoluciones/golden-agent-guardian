@@ -101,7 +101,6 @@ const NAV: { to: "/" | "/validaciones" | "/politicas" | "/auditoria" | "/integra
   { to: "/validaciones", key: "nav_treasury" },
   { to: "/politicas", key: "nav_policies" },
   { to: "/auditoria", key: "nav_audit" },
-  { to: "/integraciones", key: "nav_inbox" },
   { to: "/demo", key: "nav_inbox" },
 ];
 
