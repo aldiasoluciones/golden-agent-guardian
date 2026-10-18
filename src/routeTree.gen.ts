@@ -22,6 +22,7 @@ import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as ValidacionesRouteImport } from './routes/validaciones'
 import { Route as ApiAuditRouteImport } from './routes/api/audit'
 import { Route as ApiPublicV1DecideRouteImport } from './routes/api/public/v1/decide'
+import { Route as ApiPublicV1InboundRouteImport } from './routes/api/public/v1/inbound'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +89,11 @@ const ApiPublicV1DecideRoute = ApiPublicV1DecideRouteImport.update({
   path: '/api/public/v1/decide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1InboundRoute = ApiPublicV1InboundRouteImport.update({
+  id: '/api/public/v1/inbound',
+  path: '/api/public/v1/inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/validaciones': typeof ValidacionesRoute
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
+  '/api/public/v1/inbound': typeof ApiPublicV1InboundRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/validaciones': typeof ValidacionesRoute
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
+  '/api/public/v1/inbound': typeof ApiPublicV1InboundRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/validaciones': typeof ValidacionesRoute
   '/api/audit': typeof ApiAuditRoute
   '/api/public/v1/decide': typeof ApiPublicV1DecideRoute
+  '/api/public/v1/inbound': typeof ApiPublicV1InboundRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/validaciones'
     | '/api/audit'
     | '/api/public/v1/decide'
+    | '/api/public/v1/inbound'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/validaciones'
     | '/api/audit'
     | '/api/public/v1/decide'
+    | '/api/public/v1/inbound'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/validaciones'
     | '/api/audit'
     | '/api/public/v1/decide'
+    | '/api/public/v1/inbound'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   ValidacionesRoute: typeof ValidacionesRoute
   ApiAuditRoute: typeof ApiAuditRoute
   ApiPublicV1DecideRoute: typeof ApiPublicV1DecideRoute
+  ApiPublicV1InboundRoute: typeof ApiPublicV1InboundRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1DecideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/inbound': {
+      id: '/api/public/v1/inbound'
+      path: '/api/public/v1/inbound'
+      fullPath: '/api/public/v1/inbound'
+      preLoaderRoute: typeof ApiPublicV1InboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   ValidacionesRoute: ValidacionesRoute,
   ApiAuditRoute: ApiAuditRoute,
   ApiPublicV1DecideRoute: ApiPublicV1DecideRoute,
+  ApiPublicV1InboundRoute: ApiPublicV1InboundRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
