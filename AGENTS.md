@@ -18,3 +18,4 @@
 - Simulated channel attachments use browser file reading and the existing extractor, with payer detection before tenant-specific ingestion — channel entry must not bypass invoice safety checks.
 - Jury runs use temporary default-policy tenant states and replace only explicitly tagged jury invoices and their audit events afterward — repeated demonstrations stay isolated without bypassing rules or deleting unrelated records.
 - Trust seals are presentation-only in a shared component with explicit scope disclosures — security claims must describe implemented controls without changing payment rules or implying external certification.
+- Preventive fraud reports are deterministic tenant-local audit snapshots generated from completed duplicate, whitelist and bank checks; they never change payment decisions — preserve evidence without labeling suspected activity as confirmed fraud.

@@ -10,6 +10,7 @@ import { getTenants } from "@/lib/tenants";
 import { exportReconciliation } from "@/lib/reconciliation";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { FraudAlert } from "@/components/fraud-alert";
 
 export const Route = createFileRoute("/auditoria")({
   head: () => ({
@@ -54,6 +55,7 @@ function AuditPage() {
         <Button onClick={() => exportExcel()} disabled={exporting} variant="outline"><Download />{exporting ? "Generando Excel…" : "Descargar conciliación Excel"}</Button>
       </div>
       {exportError && <p role="alert" className="text-destructive">{exportError}</p>}
+      <FraudAlert key={tenantId} reports />
       <InvoiceDb invoices={invoices} onOpen={setOpen} onExport={exportExcel} exporting={exporting} />
       <Panel title="Bitácora de eventos">
         {audit.length === 0 && <p className="text-sm text-muted-foreground">Sin eventos todavía.</p>}

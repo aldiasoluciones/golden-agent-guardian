@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { policiesFor } from "./tenants";
+import { recordFraudAlerts } from "./fraud-alerts";
 import type { AppState, AuditEvent, Invoice, Policies } from "./types";
 
 export const DEFAULT_POLICIES: Policies = {
@@ -105,7 +106,7 @@ export const store = {
   get: () => (load(), state),
   set(fn: (s: AppState) => AppState) {
     load();
-    state = fn(state);
+    state = recordFraudAlerts(fn(state), new Date().toISOString());
     // Persist at most a few times per second so 300/min bursts stay fast.
     if (!jurySession && !saveT) saveT = setTimeout(flush, 250);
     subs.forEach((f) => f());

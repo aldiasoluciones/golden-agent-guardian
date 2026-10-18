@@ -89,7 +89,8 @@ export type Channel = "whatsapp" | "correo" | "manual";
 export type AuditEvent = {
   id: string;
   at: string;
-  type: "recibida" | "auditoria" | "pago_auto" | "retenida" | "frenada" | "aprobada" | "rechazada" | "politica";
+  type: "recibida" | "auditoria" | "pago_auto" | "retenida" | "frenada" | "aprobada" | "rechazada" | "politica" | "alerta_fraude";
+  fraudIncident?: import("./fraud-alerts").FraudIncident;
   message: string;
   invoiceId?: string;
   amount?: number;

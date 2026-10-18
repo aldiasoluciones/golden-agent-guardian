@@ -1,4 +1,5 @@
 import { getTenants, flag } from "@/lib/tenants";
+import { FraudAlert } from "@/components/fraud-alert";
 import { CookieBanner, openCookiePrefs } from "@/components/cookie-banner";
 import { setTenant, useTenantId } from "@/lib/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -141,6 +142,7 @@ function TenantSwitch() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const lang = useLang();
+  const tenantId = useTenantId();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
@@ -170,6 +172,7 @@ function RootComponent() {
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-6 py-8">
+          <FraudAlert key={tenantId} />
           <Outlet />
         </main>
         <footer className="border-t border-border py-6 text-center font-mono text-xs text-muted-foreground">
