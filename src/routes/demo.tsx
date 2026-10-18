@@ -49,6 +49,7 @@ function Demo() {
       <ShellAttack />
     </Step>
     <Step id="salida" n={3} title="Salida · Orden hacia Blinka" text="Solo las facturas aprobadas generan orden de dispersión firmada, con su riel asignado.">
+      <FullFlow />
       <BlinkaConnect />
       <StripeWebhook />
     </Step>
