@@ -11,12 +11,12 @@ export const translateTexts = createServerFn({ method: "POST" })
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "openai/gpt-6-astra", reasoning_effort: "low",
         messages: [
           { role: "system", content: "Translate each UI string from Spanish to natural English for a fintech app. Keep numbers, codes, currency, brand names (blinkagent, AL DIA, Blinka, QuickBooks, Stripe) and emojis unchanged. If a string is already English or not translatable, return it unchanged. Reply ONLY with a JSON object {\"t\": [..]} with the same length and order." },
           { role: "user", content: JSON.stringify(data.texts) },
         ],
-        response_format: { type: "json_object" },
+        response_format: { type: "json_schema", json_schema: { name: "tr", strict: true, schema: { type: "object", additionalProperties: false, required: ["t"], properties: { t: { type: "array", items: { type: "string" } } } } } },
       }),
     });
     if (!res.ok) return { out: data.texts };
