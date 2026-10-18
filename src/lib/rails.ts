@@ -5,6 +5,7 @@ export const FX_COP: Record<Currency, number> = {
   COP: 1, USD: 4_000, EUR: 4_350, BRL: 730, MXN: 215, ARS: 4.2, CLP: 4.3, PEN: 1_070, BOB: 580, CRC: 7.9, ZAR: 220,
 };
 export const CURRENCIES = Object.keys(FX_COP) as Currency[];
+export const toCurrency = (c: unknown): Currency => (CURRENCIES.includes(String(c).toUpperCase() as Currency) ? (String(c).toUpperCase() as Currency) : "COP");
 
 export type Rail = "BRE-B" | "SEPA" | "PIX" | "SPEI" | "CBU" | "LOCAL-BANK" | "ACH" | "WIRE" | "SWIFT" | "USD-LOCAL" | "USDC" | "STRIPE";
 export type RailInfo = { rail: Rail; scope: "local" | "usd-local" | "usd-intl" | "crypto"; label: string };

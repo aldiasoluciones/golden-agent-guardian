@@ -1,6 +1,6 @@
-export type Currency = "COP" | "USD";
+export type Currency = "COP" | "USD" | "EUR" | "BRL" | "MXN" | "ARS" | "CLP" | "PEN" | "BOB" | "CRC" | "ZAR";
 
-export type Country = "CO" | "US" | "BR" | "MX" | "OTRO";
+export type Country = "CO" | "US" | "BR" | "MX" | "AR" | "CL" | "PE" | "BO" | "CR" | "ZA" | "PA" | "CN" | "HK" | "DE" | "FR" | "ES" | "IT" | "NL" | "PT" | "JP" | "OTRO";
 /** Tax document type per country: NIT (CO), EIN (US), CNPJ (BR), RFC (MX). */
 export type TaxIdType = "NIT" | "EIN" | "CNPJ" | "RFC" | "OTRO";
 /** Legal doc on file: RUT (CO), W-9 (US entity), W-8BEN/W-8BEN-E (foreign payee of a US company). */
@@ -31,6 +31,8 @@ export type Policies = {
   autoPayLimit: number;
   periodLimit: number;
   usdRate: number;
+  /** Demo rates to COP for non-USD currencies (falls back to FX_COP). */
+  fxToCOP?: Partial<Record<Currency, number>>;
   agreedTolerance: number;
   /** Max FX deviation (%) vs the configured rate when the invoice currency differs from the vendor's payout currency. */
   fxTolerance: number;

@@ -12,7 +12,7 @@ const InvoiceIn = z.object({
   vendorTaxId: str(60).min(1),
   bankAccount: str(120).min(1),
   amount: z.number().positive().max(1e12),
-  currency: z.enum(["COP", "USD"]).default("COP"),
+  currency: z.enum(["COP", "USD", "EUR", "BRL", "MXN", "ARS", "CLP", "PEN", "BOB", "CRC", "ZAR"]).default("COP"),
   category: str(60).default("Servicios"),
   dueDate: str(20).optional(),
   description: str(500).optional(),

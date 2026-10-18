@@ -1,4 +1,5 @@
 import type { Check, Currency, Invoice, Policies } from "./types";
+import { FX_COP, RAIL_HINT, accountFits, railFor } from "./rails";
 
 export const PAID: Invoice["status"][] = ["pagada", "aprobada"];
 /** Checks whose failure freezes the invoice (never paid by the agent); any other failure escalates to a person. */
@@ -7,14 +8,18 @@ export const FREEZE_CHECKS = ["whitelist", "duplicate", "payer"];
 export const fmt = (n: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 export const money = (n: number, c: Currency = "COP") =>
-  c === "USD"
-    ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(n) + " USD"
-    : fmt(n);
+  c === "COP"
+    ? fmt(n)
+    : new Intl.NumberFormat("en-US", { style: "currency", currency: c, maximumFractionDigits: 2 }).format(n) + ` ${c}`;
 
-export const toCOP = (n: number, c: Currency | undefined, p: Pick<Policies, "usdRate">) => (c === "USD" ? n * p.usdRate : n);
-export const invCOP = (i: Invoice, p: Pick<Policies, "usdRate">) => toCOP(i.amount, i.currency, p);
+type FxP = Pick<Policies, "usdRate"> & { fxToCOP?: Policies["fxToCOP"] };
+export const rateCOP = (c: Currency | undefined, p: FxP) => (!c || c === "COP" ? 1 : c === "USD" ? p.usdRate : p.fxToCOP?.[c] ?? FX_COP[c] ?? 1);
+export const toCOP = (n: number, c: Currency | undefined, p: FxP) => n * rateCOP(c, p);
+/** Convert between any two currencies through COP at the configured rates. */
+export const convert = (n: number, from: Currency | undefined, to: Currency | undefined, p: FxP) => (from === to ? n : (n * rateCOP(from, p)) / rateCOP(to, p));
+export const invCOP = (i: Invoice, p: FxP) => toCOP(i.amount, i.currency, p);
 
-export function spentByCategory(invoices: Invoice[], p: Pick<Policies, "usdRate">) {
+export function spentByCategory(invoices: Invoice[], p: FxP) {
   const out: Record<string, number> = {};
   for (const i of invoices) if (PAID.includes(i.status)) out[i.category] = (out[i.category] ?? 0) + invCOP(i, p);
   return out;
@@ -56,7 +61,7 @@ export function explain(checks: Check[]): string {
 export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Check[] {
   const vendor = p.vendors.find((v) => norm(v.nit) === norm(inv.nit));
   const cop = invCOP(inv, p);
-  const shown = money(inv.amount, inv.currency) + (inv.currency === "USD" ? ` (≈ ${fmt(cop)})` : "");
+  const shown = money(inv.amount, inv.currency) + (inv.currency && inv.currency !== "COP" ? ` (≈ ${fmt(cop)})` : "");
   const checks: Check[] = [];
 
   if (inv.payer) {
@@ -128,24 +133,21 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
       });
     }
 
-    // International rail: cross-border payments need a valid SWIFT/ACH account reference.
+    // Payment rail: Blinka corridor for country + payout currency, and the account must fit that rail.
     const intl = vendor.country !== undefined && vendor.country !== "CO";
-    if (intl) {
-      const rail = vendor.payMethod ?? "local";
-      const acct = inv.bankAccount.toUpperCase();
-      const ok =
-        rail === "swift"
-          ? /SWIFT[: ]?[A-Z0-9]{8,11}/.test(acct) || /[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?/.test(acct)
-          : rail === "ach"
-            ? /\b\d{9}\b/.test(acct)
-            : false;
+    const payCur = vendor.payoutCurrency ?? vendor.currency;
+    if (intl || payCur !== "COP") {
+      const r = railFor(vendor.country, payCur, inv.bankAccount, vendor.payMethod);
+      const ok = !!r && accountFits(r.rail, inv.bankAccount);
       checks.push({
         id: "intlRail",
-        label: `Riel internacional válido (${rail.toUpperCase()})`,
+        label: `Riel de pago válido (${r?.label ?? `${vendor.country} · ${payCur}`})`,
         passed: ok,
-        detail: ok
-          ? `Cuenta ${rail.toUpperCase()} verificada para transferencia internacional.`
-          : `Pago internacional a ${vendor.country} exige ${rail === "swift" ? "código SWIFT/BIC" : rail === "ach" ? "routing ACH de 9 dígitos" : "un riel internacional"} en la cuenta; «${inv.bankAccount}» no lo tiene.`,
+        detail: !r
+          ? `Sin ruta de pago Blinka para ${payCur} hacia ${vendor.country}. Requiere revisión humana.`
+          : ok
+            ? `Ruta ${r.label} disponible; cuenta con ${RAIL_HINT[r.rail]} verificada.`
+            : `La ruta ${r.label} exige ${RAIL_HINT[r.rail]}; «${inv.bankAccount}» no lo tiene.`,
       });
     }
   }
@@ -163,9 +165,9 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
       });
     } else {
       // Invoice in another currency: the conversion must use the configured rate within tolerance.
-      const converted = invCur === "COP" ? inv.amount / p.usdRate : inv.amount * p.usdRate;
+      const converted = convert(inv.amount, invCur, payout, p);
       const refVendor = vendor.agreedAmount ?? vendor.avgAmount;
-      const ref = vendor.currency === payout ? refVendor : payout === "COP" ? refVendor * p.usdRate : refVendor / p.usdRate;
+      const ref = convert(refVendor, vendor.currency, payout, p);
       const diff = ref > 0 ? Math.abs(converted - ref) / ref : 1;
       const ok = diff <= p.fxTolerance / 100;
       checks.push({
@@ -173,8 +175,8 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
         label: `Conversión a ${payout} con tasa oficial`,
         passed: ok,
         detail: ok
-          ? `El proveedor cobra en ${payout}; ${money(inv.amount, invCur)} ≈ ${money(converted, payout)} a TRM ${fmt(p.usdRate)} (desvío ${(diff * 100).toFixed(1)}% ≤ ${p.fxTolerance}%).`
-          : `El proveedor cobra en ${payout}; ${money(inv.amount, invCur)} ≈ ${money(converted, payout)} a TRM ${fmt(p.usdRate)}, pero lo acordado es ${money(ref, payout)}: desvío ${(diff * 100).toFixed(1)}% (tolerancia ${p.fxTolerance}%). Posible tasa alterada.`,
+          ? `El proveedor cobra en ${payout}; ${money(inv.amount, invCur)} ≈ ${money(converted, payout)} a tasa ${fmt(rateCOP(invCur === "COP" ? payout : invCur, p))}/COP (desvío ${(diff * 100).toFixed(1)}% ≤ ${p.fxTolerance}%).`
+          : `El proveedor cobra en ${payout}; ${money(inv.amount, invCur)} ≈ ${money(converted, payout)} a tasa ${fmt(rateCOP(invCur === "COP" ? payout : invCur, p))}/COP, pero lo acordado es ${money(ref, payout)}: desvío ${(diff * 100).toFixed(1)}% (tolerancia ${p.fxTolerance}%). Posible tasa alterada.`,
       });
     }
   }
@@ -183,7 +185,7 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
     const agreed = vendor.agreedAmount;
     // Compare in the vendor's currency; if the invoice comes in another currency, convert at the configured rate.
     const same = (inv.currency ?? "COP") === vendor.currency;
-    const invInVendorCur = same ? inv.amount : inv.currency === "COP" ? inv.amount / p.usdRate : inv.amount * p.usdRate;
+    const invInVendorCur = convert(inv.amount, inv.currency ?? "COP", vendor.currency, p);
     const diff = Math.abs(invInVendorCur - agreed) / agreed;
     const ok = diff <= p.agreedTolerance / 100;
     checks.push({
@@ -191,7 +193,7 @@ export function evaluateInvoice(inv: Invoice, p: Policies, all: Invoice[]): Chec
       label: "Monto cuadra con lo acordado",
       passed: ok,
       detail: ok
-        ? `Acordado ${money(agreed, vendor.currency)}; diferencia ${(diff * 100).toFixed(1)}% (tolerancia ${p.agreedTolerance}%)${same ? "" : `, convertido a TRM ${fmt(p.usdRate)}`}.`
+        ? `Acordado ${money(agreed, vendor.currency)}; diferencia ${(diff * 100).toFixed(1)}% (tolerancia ${p.agreedTolerance}%)${same ? "" : `, convertido a tasa configurada`}.`
         : `Acordado ${money(agreed, vendor.currency)}, facturado ${money(inv.amount, inv.currency)}${same ? "" : ` (≈ ${money(invInVendorCur, vendor.currency)})`}: ${(diff * 100).toFixed(1)}% de diferencia (tolerancia ${p.agreedTolerance}%).`,
     });
   }

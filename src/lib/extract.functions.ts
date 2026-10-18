@@ -18,7 +18,7 @@ const schema = {
     nit: { type: "string" },
     bankAccount: { type: "string", description: "Banco y número de cuenta destino" },
     amount: { type: "number", description: "Total a pagar en la moneda de la factura" },
-    currency: { type: "string", enum: ["COP", "USD"] },
+    currency: { type: "string", enum: ["COP", "USD", "EUR", "BRL", "MXN", "ARS", "CLP", "PEN", "BOB", "CRC", "ZAR"] },
     category: { type: "string", enum: ["Suministros", "Tecnología", "Logística", "Servicios", "Otro"] },
     dueDate: { type: "string", description: "YYYY-MM-DD" },
     description: { type: "string" },
