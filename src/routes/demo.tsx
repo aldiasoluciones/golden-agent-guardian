@@ -8,6 +8,7 @@ import { InboundWebhook } from "@/components/inbound-webhook";
 import { BlinkaConnect } from "@/components/blinka-connect";
 import { QuickBooksWebhook, StripeWebhook } from "@/components/provider-webhooks";
 import { FullFlow } from "@/components/full-flow";
+import { RealTestGuide } from "@/components/real-test-guide";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({ meta: [
@@ -38,9 +39,10 @@ function Demo() {
       <p className="mt-1 text-muted-foreground">Entrada → decisión → salida. Todo simulado: no se mueve dinero real.</p>
     </div>
     <FullFlow />
+    <RealTestGuide />
     <Step id="entrada" n={1} title="Entrada · La factura llega" text="Por correo, WhatsApp, archivo, lote o directamente desde el ERP con firma segura.">
       <div className="grid gap-6 lg:grid-cols-2"><Correo /><WhatsApp /></div>
-      <DemoUpload />
+      <div id="factura-propia" className="scroll-mt-20"><DemoUpload /></div>
       <Burst />
       <QuickBooksWebhook />
       <InboundWebhook />
