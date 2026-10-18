@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Mover la alerta preventiva de Inicio a una ventana emergente en Bandeja y verificar cierre, informes y aislamiento por cliente
+- [x] Mover la alerta preventiva de Inicio a una ventana emergente en Bandeja y verificar cierre, informes y aislamiento por cliente
 - [x] Reunir entrada y salida simulada en Centro de Integración, enlazado desde menú y Demo
 - [x] Verificar navegación y controles de ambas conexiones
 - [x] Crear alerta preventiva por tres facturas sospechosas en diez minutos, aislada por cliente, e informe descargable
