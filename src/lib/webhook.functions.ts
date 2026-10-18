@@ -55,3 +55,16 @@ export const sendDispersalWebhook = createServerFn({ method: "POST" })
       return { ok: false, status: 0, ms: Date.now() - t0, error: e instanceof Error ? e.message : "Error de red", signature, body };
     }
   });
+
+/** Creates a temporary public test receiver on webhook.site for live demos. */
+export const createTestWebhook = createServerFn({ method: "POST" }).handler(async () => {
+  try {
+    const res = await fetch("https://webhook.site/token", { method: "POST", headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return { ok: false, url: "", viewUrl: "", error: `webhook.site respondió ${res.status}` };
+    const { uuid } = (await res.json()) as { uuid?: string };
+    if (!uuid) return { ok: false, url: "", viewUrl: "", error: "Respuesta inválida" };
+    return { ok: true, url: `https://webhook.site/${uuid}`, viewUrl: `https://webhook.site/#!/view/${uuid}`, error: "" };
+  } catch {
+    return { ok: false, url: "", viewUrl: "", error: "No se pudo crear el webhook. Abre webhook.site y pega tu URL." };
+  }
+});
