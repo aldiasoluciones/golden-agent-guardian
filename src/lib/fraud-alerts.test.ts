@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fraudIncidents, fraudReportWorkbook, recordFraudAlerts } from "./fraud-alerts";
+import { fraudIncidents, fraudReportWorkbook, recordFraudAlerts, fraudScan } from "./fraud-alerts";
 import { DEFAULT_POLICIES } from "./store";
 import type { AppState, Invoice } from "./types";
 
@@ -12,6 +12,25 @@ const invoice = (n: number, minutes = n, check = "bank"): Invoice => ({
 const state = (invoices: Invoice[]): AppState => ({ invoices, policies: DEFAULT_POLICIES, audit: [] });
 
 describe("alerta preventiva por cliente", () => {
+  it("espera al final del escaneo para presentar el resultado consolidado", () => {
+    const detected = recordFraudAlerts(state([invoice(1), invoice(2), invoice(3)]), "2026-10-18T00:04:00Z");
+    const queued = { ...detected, invoices: [...detected.invoices, { ...invoice(4), status: "auditando" as const }] };
+    expect(fraudScan(queued).pending).toBe(1);
+    expect(fraudScan({ ...queued, invoices: queued.invoices.map((i) => ({ ...i, status: "retenida" })) }).pending).toBe(0);
+  });
+  it("consolida todas las evidencias y movimientos sospechosos sin duplicar ni cambiar decisiones", async () => {
+    const detected = recordFraudAlerts(state([invoice(1, 0), invoice(2, 1), invoice(3, 2), invoice(4, 30), invoice(5, 31), invoice(6, 32)]), "2026-10-18T00:33:00Z");
+    const input = { ...detected, invoices: [...detected.invoices, invoice(7, 60)] };
+    const before = JSON.stringify(input);
+    const scan = fraudScan(input);
+    expect(scan.eventCount).toBe(2);
+    expect(scan.incident?.invoices.map((i) => i.id)).toEqual(["INV-1", "INV-2", "INV-3", "INV-4", "INV-5", "INV-6", "INV-7"]);
+    expect(scan.incident?.amountCOP).toBe(2_800_000);
+    expect(JSON.stringify(input)).toBe(before);
+    if (!scan.incident) throw new Error("Falta consolidado");
+    const wb = await fraudReportWorkbook(scan.incident, "Cliente A", scan.incident.triggeredAt);
+    expect(wb.getWorksheet("Evidencias")?.rowCount).toBe(8);
+  });
   it("se activa exactamente con tres facturas, no con dos", () => {
     expect(fraudIncidents([invoice(1), invoice(2)], DEFAULT_POLICIES)).toHaveLength(0);
     expect(fraudIncidents([invoice(1), invoice(2), invoice(3)], DEFAULT_POLICIES)).toHaveLength(1);

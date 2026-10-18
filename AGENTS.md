@@ -19,7 +19,7 @@
 - Jury runs use temporary default-policy tenant states and replace only explicitly tagged jury invoices and their audit events afterward — repeated demonstrations stay isolated without bypassing rules or deleting unrelated records.
 - Trust seals are presentation-only in a shared component with explicit scope disclosures — security claims must describe implemented controls without changing payment rules or implying external certification.
 - Preventive fraud reports are deterministic tenant-local audit snapshots generated from completed duplicate, whitelist and bank checks; they never change payment decisions — preserve evidence without labeling suspected activity as confirmed fraud.
-- Mount preventive fraud dialogs only in Inbox, keyed by active tenant; dismissal tracks the current incident set and evidence count — new evidence can reopen the dialog without altering audit records.
+- Preventive fraud UI uses a read-only tenant-local consolidated scan, waits for pending audits to finish, and shows a nonblocking notice in operational views; dialogs open only on explicit user action and exports include unique current and historical suspicious evidence — preserve workflow and payment rules.
 
 - /integraciones co-locates the REST tester and simulated Blinka exporter; /api-docs stays available for compatibility — centralize controls without changing rules or adding a real outbound API.
 - Provider webhooks (/api/public/v1/quickbooks, /api/public/v1/stripe) verify the official Intuit/Stripe signatures via src/lib/provider-signatures.ts and never persist or move money — keeps the QuickBooks → rules → Stripe → QuickBooks flow demonstrable without real credentials.

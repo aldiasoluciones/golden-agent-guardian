@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Consolidar el escaneo preventivo al finalizar, sin ventanas automáticas, y verificar detalles e informe completo
 - [x] Añadir guía de prueba real en Demo y verificar navegación, copiado y solicitudes firmadas
 - [x] Mover la alerta preventiva de Inicio a una ventana emergente en Bandeja y verificar cierre, informes y aislamiento por cliente
 - [x] Reunir entrada y salida simulada en Centro de Integración, enlazado desde menú y Demo
